@@ -8,6 +8,7 @@ import ast
 #         self.generic_visit(node)
 
 bitwise_ops_classes = ['LShift', 'RShift', 'BitOr', 'BitXor', 'BitAnd', 'Invert']
+                        #<<         >>       |         ^         &         ~
 
 def main():
     with open('ast_fun.py') as x:
