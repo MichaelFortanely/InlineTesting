@@ -9,9 +9,9 @@ before_script:
 - source prepare-conda-env.sh
 
 script:
-- pytest tutorial_example_1.py
-- pytest tutorial_example_2.py
-- pytest tutorial_example_3.py
-- pytest task_1.py
-- pytest task_2.py
-- pytest task_4.py
+- pytest i-tests/tutorial_example_1.py
+- pytest i-tests/tutorial_example_2.py
+- pytest i-tests/tutorial_example_3.py
+- pytest i-tests/task_1.py
+- pytest i-tests/task_2.py
+- pytest i-tests/task_4.py
