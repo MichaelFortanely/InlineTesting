@@ -1,0 +1,17 @@
+language: conda
+conda:
+- 4.12.0
+
+install:
+- pip install -r requirements.txt
+
+before_script:
+- source prepare-conda-env.sh
+
+script:
+- pytest tutorial_example_1.py
+- pytest tutorial_example_2.py
+- pytest tutorial_example_3.py
+- pytest task_1.py
+- pytest task_2.py
+- pytest task_4.py
