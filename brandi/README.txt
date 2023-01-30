@@ -40,3 +40,13 @@ https://github.com/neetcode-gh/leetcode/blob/main/python/1260-shift-2d-grid.py
 
 ####################################################################################
 
+longest_palindrome.py:
+https://github.com/neetcode-gh/leetcode/blob/main/python/0005-longest-palindromic-substring.py 
+
+min_cost_to_connect_points.py:
+https://github.com/neetcode-gh/leetcode/blob/main/python/1584-min-cost-to-connect-all-points.py
+
+edit_distance.py:
+https://github.com/neetcode-gh/leetcode/blob/main/python/0072-edit-distance.py
+
+###################################################################################
