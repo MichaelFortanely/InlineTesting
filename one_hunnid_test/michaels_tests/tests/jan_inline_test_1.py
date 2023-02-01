@@ -9,7 +9,7 @@ from inline import Here
 
 # type: regex test
 
-# purpose: test regex-based implementation of the split method 
+# purpose: test regex-based implementation of the split method
 
 # simulate input
 input_list = sys.argv[1:]

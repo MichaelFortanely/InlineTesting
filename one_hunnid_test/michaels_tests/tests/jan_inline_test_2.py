@@ -21,11 +21,8 @@ for iter in range(10):
     id_num = ""
     poss_digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'E', 'I', 'O', 'U', 'X', 'Y']
     for digit in range(6):
-        id_num = id_num + str(poss_digits[random.randint(0, 15)])
+        id_num = id_num + str(poss_digits[random.randint(0, 16)])
     print(id_num)
 
-    # expected answer
-    res = True if re.match(r"[^BCDFGHJKLMNPQRSTVWZ]{6}", id_num) else False
-
     # verify
-    Here().given(input_list, poss_digits).check_true(res)
+    Here().given(input_list, poss_digits).check_true(True if re.match(r"[^BCDFGHJKLMNPQRSTVWZ]{6}", id_num) else False)

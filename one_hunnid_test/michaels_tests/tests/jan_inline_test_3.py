@@ -15,10 +15,10 @@ from inline import Here
 #simulate input
 input_list = sys.argv[1:]
 
+bin_dig = ["1", "0"]
 for iter in range(10):
     # generate a response
     bin_num = "1"
-    bin_dig = ["1", "0"]
     for digit in range(3):
         bin_num = bin_num + str(bin_dig[random.randint(0, 1)])
     res = bin(int(bin_num, 2) << 1)
@@ -29,5 +29,4 @@ for iter in range(10):
     print("Answer: " + "0b" + bin_num + " * 0b10 = " + str(ans) + "\n")
 
     # verify
-    Here().given(input_list, bin_dig).check_eq(res, ans)
-    
+    Here().given(input_list, bin_dig).check_eq(bin(int(bin_num, 2) << 1), ans)
