@@ -4,7 +4,6 @@
 # Date: 2/1/2023
 
 import sys
-import re
 import random
 from inline import Here
 

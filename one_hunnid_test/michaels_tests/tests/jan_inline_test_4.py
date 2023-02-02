@@ -4,8 +4,6 @@
 # Date: 1/31/23
 
 import sys
-import re
-import random
 from inline import Here
 
 # type: bit manipulation
