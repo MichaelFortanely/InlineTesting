@@ -23,7 +23,7 @@ for iter in range(10):
         word += chr(97 + ch_idx)
         res += chr(65 + ch_idx)
     
-    print(word + " -> " + res)
+    print("\"" + word + "\".upper() -> " + res)
 
     # verify
     Here().given(input_list, word).check_eq(res, word.upper())
