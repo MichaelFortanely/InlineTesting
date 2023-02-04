@@ -50,3 +50,9 @@ edit_distance.py:
 https://github.com/neetcode-gh/leetcode/blob/main/python/0072-edit-distance.py
 
 ###################################################################################
+
+permutation_sequence.py:
+https://leetcode.com/problems/permutation-sequence/solutions/3023786/python-beats-98-easy-optimum-solution/
+
+basic_calculator_ii.py:
+https://leetcode.com/problems/basic-calculator-ii/solutions/1646099/c-python-simple-solutions-w-explanation-postfix-stack-without-stack/
