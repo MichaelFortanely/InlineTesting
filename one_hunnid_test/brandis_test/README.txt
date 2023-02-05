@@ -1,3 +1,5 @@
+SOURCES
+
 reverse_bits.py:
 https://github.com/neetcode-gh/leetcode/blob/main/python/0190-reverse-bits.py
 
@@ -9,8 +11,6 @@ https://github.com/neetcode-gh/leetcode/blob/main/python/0010-regular-expression
 
 trapping_rainwater.py:
 https://github.com/neetcode-gh/leetcode/blob/main/python/0042-trapping-rain-water.py
-
-####################################################################################
 
 car_fleet.py:
 https://github.com/neetcode-gh/leetcode/blob/main/python/0853-car-fleet.py
@@ -24,8 +24,6 @@ https://github.com/neetcode-gh/leetcode/blob/main/python/0875-koko-eating-banana
 palindrome_partitioning.py:
 https://github.com/neetcode-gh/leetcode/blob/main/python/0131-palindrome-partitioning.py
 
-#####################################################################################
-
 find_missing_observations.py:
 https://leetcode.com/problems/find-missing-observations/solutions/1500256/c-java-python-math-then-div-mod-clean-concise/
 
@@ -38,8 +36,6 @@ https://github.com/neetcode-gh/leetcode/blob/main/python/0043-multiply-strings.p
 shift_2d_grid.py:
 https://github.com/neetcode-gh/leetcode/blob/main/python/1260-shift-2d-grid.py
 
-####################################################################################
-
 longest_palindrome.py:
 https://github.com/neetcode-gh/leetcode/blob/main/python/0005-longest-palindromic-substring.py 
 
@@ -48,8 +44,6 @@ https://github.com/neetcode-gh/leetcode/blob/main/python/1584-min-cost-to-connec
 
 edit_distance.py:
 https://github.com/neetcode-gh/leetcode/blob/main/python/0072-edit-distance.py
-
-###################################################################################
 
 permutation_sequence.py:
 https://leetcode.com/problems/permutation-sequence/solutions/3023786/python-beats-98-easy-optimum-solution/
