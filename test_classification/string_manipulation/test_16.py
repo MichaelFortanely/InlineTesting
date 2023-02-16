@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Inline Test # 17
 # Senior Design Project - FH12
 # Author: Jan C. Rubio
@@ -25,3 +26,12 @@ for iter in range(10):
 
     # verify
     Here().given(input_list, letters).check_eq(" "*(10-len(word)) + word, word.rjust(10))
+=======
+from inline import Here
+
+    
+sample = "Hello"
+size_string = 32
+doubled = sample.zfill(size_string)
+Here().given(sample, "test_G").given(size_string, 15).check_eq(doubled, "000000000test_G")
+>>>>>>> sydney_classify
