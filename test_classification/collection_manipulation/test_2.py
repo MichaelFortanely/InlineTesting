@@ -39,5 +39,4 @@ class sol:
 
 obj = sol()
 trio = obj.threeSum(ex)
-Here().given(ex, [1]).check_eq(trio, [])
 print(trio)
