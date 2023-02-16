@@ -23,7 +23,6 @@ class Solution(object):
                     result.append(pos)
         print(result)
         result2 = '/'+'/'.join(result)
-        Here().given(result, ['he', '4', 'ddd']).check_eq(result2, '/he/4/1/65d')
         Here().given(result, ['he', '  ', '5']).check_eq(result2, '/he/  /5')
 
         return result2

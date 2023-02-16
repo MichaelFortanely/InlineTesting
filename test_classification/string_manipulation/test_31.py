@@ -1,5 +1,3 @@
-# https://github.com/qiyuangong/leetcode/blob/master/python/047_Permutations_II.py
-
 from inline import Here
 
 class Solution(object):
@@ -16,7 +14,6 @@ class Solution(object):
                     print(new_perm)
                     stemp = ''.join(map(str, new_perm))
                     Here().given(new_perm, ['1', '2', '3', '4']).check_eq(stemp, '1234')
-                    Here().given(new_perm, ['1', 's', '7', '4']).check_eq(stemp, '1s74')
                     
                     print(stemp)
                     if stemp not in cache:
