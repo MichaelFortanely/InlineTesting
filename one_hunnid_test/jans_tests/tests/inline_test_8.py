@@ -9,7 +9,7 @@ from inline import Here
 
 # type: bit manipulation
 
-# purpose: use bit manipulation to display only even digits
+# purpose: use string manipulation to display only even digits
 # by replacing all odd digits with 0.
 
 #simulate input

@@ -16,12 +16,11 @@ input_list = sys.argv[1:]
 
 for iter in range(10):
     word = ""
-
-    # generate random 3-letter string
     for n in range(3):
+        # generate word
         ch_idx = random.randint(0, 25)
         word = chr(97 + ch_idx) + word + chr(97 + ch_idx)
-    print("make_palindrome(\"" + word[0:3] + "\") -> " + word)
+    print(word[0:3] + " => " + word)
 
     # verify
     Here().given(input_list, word).check_eq(word, word[0:3] + "".join(reversed(word[0:3])))

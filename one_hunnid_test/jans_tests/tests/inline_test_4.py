@@ -24,6 +24,7 @@ def dec_to_alpha(num):
             base_num += chr(ord('a') + dig - 10)
         num //= 36
     base_num = base_num[::-1]  #To reverse the string
+
     return base_num
 
 # function 2: encrypt message with key
@@ -36,22 +37,25 @@ def decrypt(message, key):
     decryption = int(message, base=36)
     return decryption >> key
 
-secrets = ["hello", "password", "something", "code", "reply"]
 
-for iter in range(5):
-    # expected answer: message to encrypt and decrypt
-    secret = secrets[iter]
-    key = len(secret)
-    print("expected answer: " + secret)
+''' Encrypt and Decrypt functions '''
 
-    # loss-less encrypt secret message with key=len(secret)
-    message = dec_to_alpha(encrypt(secret))
-    print("encrypted message: " + message)
-    print("key: " + str(key))
+secret = "password"
 
-    # decrypt message
-    res = dec_to_alpha(decrypt(message, key))
-    print("decrypted message: " + res + "\n")
+# expected answer: message to encrypt and decrypt
+key = len(secret)
+print("expected answer: " + secret)
 
-    # verify
-    Here().given(input_list, message).check_eq(dec_to_alpha(int(message, 36) >> key), secret)
+# loss-less encrypt secret message with key=len(secret)
+encoded_msg = encrypt(secret)
+message = dec_to_alpha(encoded_msg)
+print("encrypted message: " + message)
+print("key: " + str(key))
+
+# decrypt message
+decoded_msg = decrypt(message, key)
+res = dec_to_alpha(decoded_msg)
+print("decrypted message: " + res)
+
+# verify
+Here().given(secret, "password").given(key, 8).check_eq(encoded_msg >> key, decoded_msg)

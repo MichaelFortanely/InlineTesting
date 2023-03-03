@@ -10,8 +10,7 @@ from inline import Here
 
 # type: string manipulation
 
-# purpose: convert a random 8-bit binary number to hex by
-# dividing the work in 2 equal 4-bit numbers 
+# purpose: convert a random 8-bit binary number to hex
 
 #simulate input
 input_list = sys.argv[1:]
