@@ -63,6 +63,3 @@ def process_comment(current_line) -> bool:
         else:
             skip=True
     return current_line, skip
-
-
-create_set()

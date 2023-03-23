@@ -1,10 +1,9 @@
 import find_features
 
-import pandas as pd
 import numpy as np
 
-def run_tree():
-    arr=np.load('simple_data.npy')
+def run_tree(file_name):
+    arr=np.load(file_name)
     x=np.ndarray.tolist(arr)
     print(len(x))
     print(x[0])
