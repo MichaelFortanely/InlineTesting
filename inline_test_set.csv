@@ -1,0 +1,4542 @@
+,0,1,2
+0,line_number,line,isLOI
+1,0,from inline import Here,0
+2,1,,0
+3,2,"def WriteComment(f, c, row, width, height, bottomReserved, fontsize, lifetime, styleid):",0
+4,3,text = ASSEscape(c[3]),0
+5,4,styles = [],0
+6,5,if c[4] == 1:,0
+7,6,styles.append(,0
+8,7,"""\\an8\\pos(%(halfwidth)s, %(row)s)""",0
+9,8,"% {""halfwidth"": round(width / 2), ""row"": row}",0
+10,9,),0
+11,10,elif c[4] == 2:,0
+12,11,styles.append(,0
+13,12,"""\\an2\\pos(%(halfwidth)s, %(row)s)""",0
+14,13,% {,0
+15,14,"""halfwidth"": round(width / 2),",0
+16,15,"""row"": ConvertType2(row, height, bottomReserved),",0
+17,16,},0
+18,17,),0
+19,18,elif c[4] == 3:,0
+20,19,styles.append(,0
+21,20,"""\\move(%(neglen)s, %(row)s, %(width)s, %(row)s)""",0
+22,21,"% {""width"": width, ""row"": row, ""neglen"": -math.ceil(c[8])}",0
+23,22,),0
+24,23,else:,0
+25,24,styles.append(,0
+26,25,"""\\move(%(width)s, %(row)s, %(neglen)s, %(row)s)""",0
+27,26,"% {""width"": width, ""row"": row, ""neglen"": -math.ceil(c[8])}",0
+28,27,),0
+29,28,if not (-1 < c[6] - fontsize < 1):,0
+30,29,"styles.append(""\\fs%s"" % round(c[6]))",0
+31,30,if c[5] != 0xFFFFFF:,0
+32,31,styles.append(,0
+33,32,"""\\c&H%02X%02X%02X&""",0
+34,33,"% (c[5] & 0xFF, (c[5] >> 8) & 0xFF, (c[5] >> 16) & 0xFF)",0
+35,34,),0
+36,35,"Here(test_name=""38"").given(c, [None] * 6).given(c[5], 0xFFFFF3).given(styles, []).check_eq(styles[-1], ""\\c&HF3FFFF&"")",0
+37,36,if c[5] == 0x000000:,0
+38,37,"styles.append(""\\3c&HFFFFFF&"")",0
+39,38,f.write(,0
+40,39,"""Dialogue: 2,%(start)s,%(end)s,%(styleid)s,,0000,0000,0000,,{%(styles)s}%(text)s\n""",0
+41,40,% {,0
+42,41,"""start"": ConvertTimestamp(c[0]),",0
+43,42,"""end"": ConvertTimestamp(c[0] + lifetime),",0
+44,43,"""styles"": """".join(styles),",0
+45,44,"""text"": text,",0
+46,45,"""styleid"": styleid,",0
+47,47,"    )
+",0
+48,0,from inline import Here,0
+49,1,,0
+50,2,"def _split(self, data):",0
+51,3,"""""""",0
+52,4,Split the Type 1 font into its three main parts.,0
+53,5,,0
+54,6,"The three parts are: (1) the cleartext part, which ends in a",0
+55,7,"eexec operator; (2) the encrypted part; (3) the fixed part,",0
+56,8,which contains 512 ASCII zeros possibly divided on various,0
+57,9,"lines, a cleartomark operator, and possibly something else.",0
+58,10,"""""""",0
+59,11,,0
+60,13,"idx = data.index(b""eexec"")",0
+61,14,"idx += len(b""eexec"")",0
+62,15,"while data[idx] in b"" \t\r\n"":",0
+63,16,idx += 1,0
+64,17,len1 = idx,0
+65,18,,0
+66,21,"idx = data.rindex(b""cleartomark"") - 1",0
+67,22,zeros = 512,0
+68,23,"while zeros and data[idx] in b""0"" or data[idx] in b""\r\n"":",0
+69,24,"if data[idx] in b""0"":",0
+70,25,zeros -= 1,0
+71,26,idx -= 1,0
+72,27,if zeros:,0
+73,30,"_log.info(""Insufficiently many zeros in Type 1 font"")",0
+74,31,,0
+75,36,idx1 = len1 + ((idx - len1 + 2) & ~1)  ,1
+76,39,binary = binascii.unhexlify(data[len1:idx1]),0
+77,41,"    return data[:len1], binary, data[idx + 1 :]
+",0
+78,0,from inline import Here,0
+79,1,,0
+80,2,def r_short(self) -> int:,0
+81,3,buf = self.r_string(2),0
+82,4,x = buf[0],0
+83,5,x |= buf[1] << 8,1
+84,7,x |= -(x & (1 << 15))  ,1
+85,9,,0
+86,10,return x,0
+87,11,,0
+88,12,,0
+89,13,def r_long(self) -> int:,0
+90,14,buf = self.r_string(4),0
+91,15,x = buf[0],0
+92,16,x |= buf[1] << 8,0
+93,17,x |= buf[2] << 16,0
+94,18,x |= buf[3] << 24,0
+95,20,"    return x
+",0
+96,0,from inline import Here,0
+97,1,,0
+98,2,def _parse_float_vec(vec):,0
+99,3,"""""""",0
+100,4,Parse a vector of float values representing IBM 8 byte floats into,0
+101,5,native 8 byte floats.,0
+102,6,"""""""",0
+103,7,"dtype = np.dtype("">u4,>u4"")",0
+104,8,vec1 = vec.view(dtype=dtype),0
+105,9,"xport1 = vec1[""f0""]",0
+106,10,"xport2 = vec1[""f1""]",0
+107,11,,0
+108,14,ieee1 = xport1 & 0x00FFFFFF,0
+109,15,,0
+110,21,"shift = np.zeros(len(vec), dtype=np.uint8)",0
+111,22,shift[np.where(xport1 & 0x00200000)] = 1,0
+112,23,shift[np.where(xport1 & 0x00400000)] = 2,0
+113,24,shift[np.where(xport1 & 0x00800000)] = 3,0
+114,25,,0
+115,33,ieee1 >>= shift,0
+116,34,ieee2 = (xport2 >> shift) | ((xport1 & 0x00000007) << (29 + (3 - shift))),1
+117,36,,0
+118,38,ieee1 &= 0xFFEFFFFF,0
+119,39,,0
+120,47,ieee1 |= ((((((xport1 >> 24) & 0x7F) - 65) << 2) + shift + 1023) << 20) | (,0
+121,48,xport1 & 0x80000000,0
+122,49,),0
+123,50,,0
+124,51,"ieee = np.empty((len(ieee1),), dtype="">u4,>u4"")",0
+125,52,"ieee[""f0""] = ieee1",0
+126,53,"ieee[""f1""] = ieee2",0
+127,54,"ieee = ieee.view(dtype="">f8"")",0
+128,55,"ieee = ieee.astype(""f8"")",0
+129,57,    return ieee,0
+130,0,from inline import Here,0
+131,1,,0
+132,2,def final_hash(self):,0
+133,3,"""""""",0
+134,4,"Calls all the other methods to process the input. Pads the data, then splits into",0
+135,5,blocks and then does a series of operations for each block (including expansion).,0
+136,6,"For each block, the variable h that was initialized is copied to a,b,c,d,e",0
+137,7,"and these 5 variables a,b,c,d,e undergo several changes. After all the blocks are",0
+138,8,"processed, these 5 variables are pairwise added to h ie a to h[0], b to h[1] and so on.",0
+139,9,This h becomes our final hash which is returned.,0
+140,10,"""""""",0
+141,11,self.padded_data = self.padding(),0
+142,12,self.blocks = self.split_blocks(),0
+143,13,for block in self.blocks:,0
+144,14,expanded_block = self.expand_block(block),0
+145,15,"a, b, c, d, e = self.h",0
+146,16,"for i in range(0, 80):",0
+147,17,if 0 <= i < 20:,0
+148,18,f = (b & c) | ((~b) & d),1
+149,20,k = 0x5A827999,0
+150,21,elif 20 <= i < 40:,0
+151,22,f = b ^ c ^ d,1
+152,24,k = 0x6ED9EBA1,0
+153,25,elif 40 <= i < 60:,0
+154,26,f = (b & c) | (b & d) | (c & d),1
+155,28,k = 0x8F1BBCDC,0
+156,29,elif 60 <= i < 80:,0
+157,30,f = b ^ c ^ d,1
+158,32,k = 0xCA62C1D6,0
+159,33,"a, b, c, d, e = (",0
+160,34,"self.rotate(a, 5) + f + e + k + expanded_block[i] & 0xFFFFFFFF,",0
+161,35,"a,",0
+162,36,"self.rotate(b, 30),",0
+163,37,"c,",0
+164,38,"d,",0
+165,39,),0
+166,40,self.h = (,0
+167,41,"self.h[0] + a & 0xFFFFFFFF,",0
+168,42,"self.h[1] + b & 0xFFFFFFFF,",0
+169,43,"self.h[2] + c & 0xFFFFFFFF,",0
+170,44,"self.h[3] + d & 0xFFFFFFFF,",0
+171,45,"self.h[4] + e & 0xFFFFFFFF,",0
+172,47,"    return ""%08x%08x%08x%08x%08x"" % tuple(self.h)
+",0
+173,0,from inline import Here,0
+174,1,,0
+175,2,"def parse_inet_line(self, words, current_if, ips):",0
+176,7,if words[1] == 'alias':,0
+177,8,del words[1],0
+178,9,,0
+179,10,address = {'address': words[1]},0
+180,13,if '/' in address['address']:,0
+181,14,"ip_address, cidr_mask = address['address'].split('/')",0
+182,15,,0
+183,16,address['address'] = ip_address,0
+184,17,,0
+185,18,netmask_length = int(cidr_mask),0
+186,19,netmask_bin = (1 << 32) - (1 << 32 >> int(netmask_length)),1
+187,21,"address['netmask'] = socket.inet_ntoa(struct.pack('!L', netmask_bin))",0
+188,22,,0
+189,23,if len(words) > 5:,0
+190,24,address['broadcast'] = words[3],0
+191,25,,0
+192,26,else:,0
+193,28,"if re.match('([0-9a-f]){8}', words[3]) and len(words[3]) == 8:",0
+194,29,words[3] = '0x' + words[3],0
+195,30,if words[3].startswith('0x'):,0
+196,31,"address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(words[3], base=16)))",0
+197,32,else:,0
+198,34,address['netmask'] = words[3],0
+199,36,"address_bin = struct.unpack('!L', socket.inet_aton(address['address']))[0]",0
+200,37,"netmask_bin = struct.unpack('!L', socket.inet_aton(address['netmask']))[0]",0
+201,38,"address['network'] = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))",0
+202,39,if 'broadcast' not in address:,0
+203,41,if len(words) > 5:,0
+204,42,address['broadcast'] = words[5],0
+205,43,else:,0
+206,44,"address['broadcast'] = socket.inet_ntoa(struct.pack('!L', address_bin | (~netmask_bin & 0xffffffff)))",0
+207,45,,0
+208,47,if not words[1].startswith('127.'):,0
+209,49,    current_if['ipv4'].append(address),0
+210,0,from inline import Here,0
+211,1,,0
+212,2,def population_count(x):,0
+213,3,"assert np.issubdtype(x.dtype, np.integer)",0
+214,4,dtype = x.dtype,0
+215,5,iinfo = np.iinfo(x.dtype),0
+216,6,if np.iinfo(x.dtype).bits < 32:,0
+217,7,"assert iinfo.kind in ('i', 'u')",0
+218,8,x = x.astype(np.uint32 if iinfo.kind == 'u' else np.int32),0
+219,9,if iinfo.kind == 'i':,0
+220,10,"x = x.view(f""uint{np.iinfo(x.dtype).bits}"")",0
+221,11,"assert x.dtype in (np.uint32, np.uint64)",0
+222,12,m = [,0
+223,13,"np.uint64(0x5555555555555555),  ",0
+224,14,"np.uint64(0x3333333333333333),  ",0
+225,15,"np.uint64(0x0f0f0f0f0f0f0f0f),  ",0
+226,16,"np.uint64(0x00ff00ff00ff00ff),  ",0
+227,17,"np.uint64(0x0000ffff0000ffff),  ",0
+228,18,"np.uint64(0x00000000ffffffff),  ",0
+229,19,],0
+230,20,,0
+231,21,if x.dtype == np.uint32:,0
+232,22,"m = list(map(np.uint32, m[:-1]))",0
+233,23,,0
+234,24,x = (x & m[0]) + ((x >>  1) & m[0])  ,1
+235,26,x = (x & m[1]) + ((x >>  2) & m[1])  ,0
+236,27,x = (x & m[2]) + ((x >>  4) & m[2])  ,0
+237,28,x = (x & m[3]) + ((x >>  8) & m[3])  ,0
+238,29,x = (x & m[4]) + ((x >> 16) & m[4])  ,0
+239,30,if x.dtype == np.uint64:,0
+240,32,  return x.astype(dtype),0
+241,0,from inline import Here,0
+242,1,,0
+243,2,"def sign(self, user, pw, clid):",0
+244,3,a = 33,0
+245,4,i = 1,0
+246,5,s = 440123,0
+247,6,w = 117,0
+248,7,u = 1800000,0
+249,8,l = 1042,0
+250,9,b = 37,0
+251,10,k = 37,0
+252,11,c = 5,0
+253,12,"n = ""0763ed7314c69015fd4a0dc16bbf4b90""  ",0
+254,13,"y = ""8""  ",0
+255,14,"r = ""Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36""  ",0
+256,15,e = user  ,0
+257,16,t = clid  ,0
+258,17,,0
+259,18,"d = ""-"".join([str(mInt) for mInt in [a, i, s, w, u, l, b, k]])",0
+260,19,p = n + y + d + r + e + t + d + n,0
+261,20,h = p,0
+262,21,,0
+263,22,m = 8011470,0
+264,23,f = 0,0
+265,24,,0
+266,25,"for f in range(f, len(h)):",0
+267,26,m = (m >> 1) + ((1 & m) << 23),1
+268,28,m += ord(h[f]),1
+269,30,m &= 16777215,1
+270,32,,0
+271,34,"out = str(y) + "":"" + str(d) + "":"" + format(m, ""x"") + "":"" + str(c)",0
+272,36,"    return out
+",0
+273,0,from inline import Here,0
+274,1,,0
+275,2,"def __init__(self, file: ""IO[str]"") -> None:",0
+276,3,handle = GetStdHandle(STDOUT),0
+277,4,self._handle = handle,0
+278,5,default_text = GetConsoleScreenBufferInfo(handle).wAttributes,0
+279,6,self._default_text = default_text,0
+280,7,,0
+281,8,self._default_fore = default_text & 7,0
+282,9,self._default_back = (default_text >> 4) & 7,1
+283,11,self._default_attrs = self._default_fore | (self._default_back << 4),1
+284,13,,0
+285,14,self._file = file,0
+286,16,"    self.flush = file.flush
+",0
+287,0,from inline import Here,0
+288,1,,0
+289,6,def _invalid_utf8_indexes(bytes):,0
+290,7,skips = [],0
+291,8,i = 0,0
+292,9,len_bytes = len(bytes),0
+293,10,while i < len_bytes:,0
+294,11,c1 = bytes[i],0
+295,12,if c1 < 0x80:,0
+296,14,i += 1,0
+297,15,continue,0
+298,16,try:,0
+299,17,c2 = bytes[i + 1],0
+300,18,if (c1 & 0xE0 == 0xC0) and (c2 & 0xC0 == 0x80):,0
+301,20,c = ((c1 & 0x1F) << 6) | (c2 & 0x3F),1
+302,22,if c < 0x80:  ,0
+303,24,"skips.extend([i, i + 1])  ",0
+304,25,i += 2,0
+305,26,continue,0
+306,27,c3 = bytes[i + 2],0
+307,28,if (c1 & 0xF0 == 0xE0) and (c2 & 0xC0 == 0x80) and (c3 & 0xC0 == 0x80):,0
+308,30,c = ((((c1 & 0x0F) << 6) | (c2 & 0x3F)) << 6) | (c3 & 0x3F),0
+309,31,if (c < 0x800) or (0xD800 <= c <= 0xDFFF):,0
+310,33,"skips.extend([i, i + 1, i + 2])",0
+311,34,i += 3,0
+312,35,continue,0
+313,36,c4 = bytes[i + 3],0
+314,37,if (,0
+315,38,(c1 & 0xF8 == 0xF0),0
+316,39,and (c2 & 0xC0 == 0x80),0
+317,40,and (c3 & 0xC0 == 0x80),0
+318,41,and (c4 & 0xC0 == 0x80),0
+319,42,):,0
+320,44,c = ((((((c1 & 0x0F) << 6) | (c2 & 0x3F)) << 6) | (c3 & 0x3F)) << 6) | (,0
+321,45,c4 & 0x3F,0
+322,46,),0
+323,47,if (c < 0x10000) or (c > 0x10FFFF):  ,0
+324,49,"skips.extend([i, i + 1, i + 2, i + 3])",0
+325,50,i += 4,0
+326,51,continue,0
+327,52,except IndexError:,0
+328,53,pass,0
+329,54,skips.append(i),0
+330,56,"    return skips
+",0
+331,0,from inline import Here,0
+332,1,,0
+333,2,def FileHeader(self):,0
+334,3,"""""""Return the per-file header as a string.""""""",0
+335,4,dt = self.date_time,0
+336,5,dosdate = (dt[0] - 1980) << 9 | dt[1] << 5 | dt[2],1
+337,7,dostime = dt[3] << 11 | dt[4] << 5 | (dt[5] // 2),1
+338,9,if self.flag_bits & 0x08:,0
+339,11,CRC = compress_size = file_size = 0,0
+340,12,else:,0
+341,13,CRC = self.CRC,0
+342,14,compress_size = self.compress_size,0
+343,15,file_size = self.file_size,0
+344,16,,0
+345,17,extra = self.extra,0
+346,18,,0
+347,19,if file_size > ZIP64_LIMIT or compress_size > ZIP64_LIMIT:,0
+348,22,"fmt = ""<HHQQ""",0
+349,23,extra = extra + struct.pack(,0
+350,24,"fmt, 1, struct.calcsize(fmt) - 4, file_size, compress_size",0
+351,25,),0
+352,26,file_size = 0xFFFFFFFF,0
+353,27,compress_size = 0xFFFFFFFF,0
+354,28,"self.extract_version = max(45, self.extract_version)",0
+355,29,"self.create_version = max(45, self.extract_version)",0
+356,30,,0
+357,31,"filename, flag_bits = self._encodeFilenameFlags()",0
+358,32,header = struct.pack(,0
+359,33,"structFileHeader,",0
+360,34,"stringFileHeader,",0
+361,35,"self.extract_version,",0
+362,36,"self.reserved,",0
+363,37,"flag_bits,",0
+364,38,"self.compress_type,",0
+365,39,"dostime,",0
+366,40,"dosdate,",0
+367,41,"CRC,",0
+368,42,"compress_size,",0
+369,43,"file_size,",0
+370,44,"len(filename),",0
+371,45,"len(extra),",0
+372,47,"    return header + filename + extra
+",0
+373,0,from typing import Tuple,0
+374,1,from inline import Here,0
+375,2,,0
+376,3,"def _read_base128le(data: bytes) -> Tuple[int, int]:",0
+377,4,res = 0,0
+378,5,offset = 0,0
+379,6,while offset < len(data):,0
+380,7,o = data[offset],0
+381,8,res += (o & 0x7F) << (7 * offset),1
+382,10,offset += 1,0
+383,11,if o < 0x80:,0
+384,24,"    raise ValueError(""varint exceeds bounds of provided data"")
+",0
+385,0,from typing import Optional,0
+386,1,from inline import Here,0
+387,2,,0
+388,3,def dga(,0
+389,4,"self,",0
+390,5,"year: Optional[int] = None,",0
+391,6,"month: Optional[int] = None,",0
+392,7,"day: Optional[int] = None,",0
+393,8,"tld: Optional[str] = None,",0
+394,9,"length: Optional[int] = None,",0
+395,10,) -> str:,0
+396,11,"""""""Generates a domain name by given date",0
+397,12,https://en.wikipedia.org/wiki/Domain_generation_algorithm,0
+398,13,,0
+399,14,:type year: int,0
+400,15,:type month: int,0
+401,16,:type day: int,0
+402,17,:type tld: str,0
+403,18,:type length: int,0
+404,19,:rtype: str,0
+405,20,"""""""",0
+406,21,,0
+407,22,"domain = """"",0
+408,23,"year = year or self.random_int(min=1, max=9999)",0
+409,24,"month = month or self.random_int(min=1, max=12)",0
+410,25,"day = day or self.random_int(min=1, max=30)",0
+411,26,tld = tld or self.tld(),0
+412,27,"length = length or self.random_int(min=2, max=63)",0
+413,28,,0
+414,29,for _ in range(length):,0
+415,30,year = ((year ^ 8 * year) >> 11) ^ ((year & 0xFFFFFFF0) << 17),1
+416,32,month = ((month ^ 4 * month) >> 25) ^ 16 * (month & 0xFFFFFFF8),1
+417,34,day = ((day ^ (day << 13)) >> 19) ^ ((day & 0xFFFFFFFE) << 12),1
+418,36,domain += chr(((year ^ month ^ day) % 25) + 97),1
+419,39,"    return domain + ""."" + tld
+",0
+420,0,from inline import Here,0
+421,1,,0
+422,2,"def find_archi(self, target_patch_size, max_layers=9):",0
+423,3,"""""""",0
+424,4,Find the best configuration of layers using only 3x3 convs for target patch size,0
+425,5,"""""""",0
+426,6,s = {},0
+427,7,"for layers_count in range(1, max_layers + 1):",0
+428,8,val = 1 << (layers_count - 1),0
+429,9,while True:,0
+430,10,val -= 1,0
+431,11,,0
+432,12,layers = [],0
+433,13,sum_st = 0,0
+434,14,"layers.append([3, 2])",0
+435,15,sum_st += 2,0
+436,16,for i in range(layers_count - 1):,0
+437,17,st = 1 + (1 if val & (1 << i) != 0 else 0),1
+438,19,"layers.append([3, st])",0
+439,20,sum_st += st,0
+440,21,,0
+441,22,rf = self.calc_receptive_field_size(layers),0
+442,23,,0
+443,24,"s_rf = s.get(rf, None)",0
+444,25,if s_rf is None:,0
+445,26,"s[rf] = (layers_count, sum_st, layers)",0
+446,27,else:,0
+447,28,if layers_count < s_rf[0] or (,0
+448,29,layers_count == s_rf[0] and sum_st > s_rf[1],0
+449,30,):,0
+450,31,"s[rf] = (layers_count, sum_st, layers)",0
+451,32,,0
+452,33,if val == 0:,0
+453,34,break,0
+454,35,,0
+455,36,x = sorted(list(s.keys())),0
+456,38,"    return s[q][2]
+",0
+457,0,from inline import Here,0
+458,1,,0
+459,2,"def _decrypt_subtitles(self, data, iv, id):",0
+460,3,data = bytes_to_intlist(compat_b64decode(data)),0
+461,4,iv = bytes_to_intlist(compat_b64decode(iv)),0
+462,5,id = int(id),0
+463,6,,0
+464,7,"def obfuscate_key_aux(count, modulo, start):",0
+465,8,output = list(start),0
+466,9,for _ in range(count):,0
+467,10,output.append(output[-1] + output[-2]),0
+468,12,output = output[2:],0
+469,13,"output = list(map(lambda x: x % modulo + 33, output))",0
+470,14,return output,0
+471,15,,0
+472,16,def obfuscate_key(key):,0
+473,17,"num1 = int(floor(pow(2, 25) * sqrt(6.9)))",0
+474,18,num2 = (num1 ^ key) << 5,1
+475,20,num3 = key ^ num1,0
+476,21,num4 = num3 ^ (num3 >> 3) ^ num2,0
+477,22,"prefix = intlist_to_bytes(obfuscate_key_aux(20, 97, (1, 2)))",0
+478,23,shaHash = bytes_to_intlist(sha1(prefix + str(num4).encode('ascii')).digest()),0
+479,25,return shaHash + [0] * 12,0
+480,26,,0
+481,27,key = obfuscate_key(id),0
+482,28,,0
+483,30,    return zlib.decompress(decrypted_data),0
+484,0,import sys,0
+485,1,from inline import Here,0
+486,2,,0
+487,5,,0
+488,7,a = 4,0
+489,8,b = -6,0
+490,9,,0
+491,10,class Combining:,0
+492,11,"def getSum(self, a: int, b: int) -> int:",0
+493,12,"def add(a, b):",0
+494,13,if not a or not b:,0
+495,14,return a or b,0
+496,15,"return add(a ^ b, (a & b) << 1)",0
+497,16,,0
+498,17,if a * b < 0:  ,0
+499,18,if a > 0:,0
+500,19,"positive = self.getSum(b, a)",0
+501,20,return positive,0
+502,21,"if add(~a, 1) == b:  ",0
+503,22,zero = 0,1
+504,24,return 0,0
+505,25,"if add(~a, 1) < b:  ",0
+506,26,"return add(~add(add(~a, 1), add(~b, 1)), 1)  ",0
+507,27,,0
+508,28,,0
+509,29,"return add(a, b)  ",0
+510,30,,0
+511,32,"c = combine.getSum(a, b)
+",0
+512,0,from inline import Here,0
+513,1,,0
+514,2,def count_set_bits(n):,0
+515,3,count = 0,0
+516,4,while n:,0
+517,5,count += n & 1,0
+518,6,n >>= 1,0
+519,7,return count,0
+520,8,,0
+521,9,"def toggle_kth_bit(n, k):",0
+522,10,return n ^ (1 << (k - 1)),0
+523,11,,0
+524,12,def main():,0
+525,13,num = 5,0
+526,14,print(bin(num)) ,0
+527,15,"print(""Number of set bits:"", count_set_bits(num))",0
+528,17,"new_num = toggle_kth_bit(num, 2)",1
+529,19,"new_num_1 = toggle_kth_bit(num, 4)",0
+530,20,"new_num_2 = toggle_kth_bit(num, 1)",0
+531,21,"new_num_3 = toggle_kth_bit(num, 3)",1
+532,23,for i in range(10):,0
+533,24,"new_num_2 = toggle_kth_bit(num, 1)",0
+534,25,print(bin(num)) ,0
+535,26,"print(""Number of set bits:"", count_set_bits(num))",0
+536,27,,0
+537,29,"    main()
+",0
+538,0,,0
+539,4,,0
+540,5,import sys,0
+541,6,from inline import Here,0
+542,7,,0
+543,9,,0
+544,12,,0
+545,14,input_list = sys.argv[1:],0
+546,15,,0
+547,16,"nums = [""3122323312"", ""3133321223"",",0
+548,17,"""1233312133"", ""3222221311"",",0
+549,18,"""3232331332"", ""1131133232"",",0
+550,19,"""3231133311"", ""1322121111"",",0
+551,20,"""1111111331"", ""3112121333""]",0
+552,21,,0
+553,22,"ansm = [""00ff000000"", ""00fff00000"",",0
+554,23,"""00fff00000"", ""0fffff0000"",",0
+555,24,"""0000ff0000"", ""00000ff000"",",0
+556,25,"""00000fff00"", ""000000ffff"",",0
+557,26,"""fffffff000"", ""0000000fff""]",0
+558,27,,0
+559,28,"idx = [2, 2, 2, 1, 4, 5, 5, 6, 0, 7]",0
+560,29,,0
+561,30,for iter in range(10):,0
+562,32,curr_n = list(nums[iter]),0
+563,33,mask_idx = idx[iter],0
+564,34,mask = curr_n[mask_idx],0
+565,35,while((mask_idx < 10) and (curr_n[mask_idx] == mask)):,0
+566,36,"curr_n[mask_idx] = ""0""",0
+567,37,mask_idx += 1,0
+568,38,,0
+569,40,"num_a = """".join(curr_n)",0
+570,41,,0
+571,42,"print(str(int(num_a, 16)))",0
+572,43,,0
+573,0,from inline import Here,0
+574,1,,0
+575,2,,0
+576,4,"def min_bit_flips(start: int, goal: int) -> int:",0
+577,6,exor = start ^ goal,1
+578,8,count = 0,0
+579,9,while exor:,0
+580,11,exor = exor & (exor - 1),0
+581,12,,0
+582,13,count += 1,0
+583,14,return count,0
+584,15,,0
+585,16,,0
+586,17,x = 0,0
+587,18,start = 1,0
+588,19,goal = 2,0
+589,20,,0
+590,22,"x = min_bit_flips(start, goal)",0
+591,23,,0
+592,24,,0
+593,26,x = x | 1,0
+594,27,,0
+595,28,,0
+596,30,a = 1,0
+597,32,"demorgan = ~(a | b) == (~a & ~b)
+",0
+598,0,from inline import Here,0
+599,1,,0
+600,2,,0
+601,4,"def min_bit_flips(start: int, goal: int) -> int:",0
+602,6,exor = start ^ goal,0
+603,7,,0
+604,8,count = 0,0
+605,9,while exor:,0
+606,11,exor = exor & (exor - 1),1
+607,13,count += 1,0
+608,14,return count,0
+609,15,,0
+610,16,,0
+611,17,x = 0,0
+612,18,start = 1,0
+613,19,goal = 2,0
+614,20,,0
+615,22,"x = min_bit_flips(start, goal)",0
+616,23,,0
+617,24,,0
+618,26,x = x | 1,0
+619,27,,0
+620,28,,0
+621,30,a = 1,0
+622,32,"demorgan = ~(a | b) == (~a & ~b)
+",0
+623,0,from inline import Here,0
+624,1,,0
+625,2,,0
+626,4,"def min_bit_flips(start: int, goal: int) -> int:",0
+627,6,exor = start ^ goal,0
+628,7,,0
+629,8,count = 0,0
+630,9,while exor:,0
+631,11,exor = exor & (exor - 1),0
+632,12,,0
+633,13,count += 1,0
+634,14,return count,0
+635,15,,0
+636,16,,0
+637,17,x = 0,0
+638,18,start = 1,0
+639,19,goal = 2,0
+640,20,,0
+641,22,"x = min_bit_flips(start, goal)",1
+642,24,,0
+643,26,x = x | 1,0
+644,27,,0
+645,28,,0
+646,30,a = 1,0
+647,32,"demorgan = ~(a | b) == (~a & ~b)
+",0
+648,0,from inline import Here,0
+649,1,,0
+650,2,,0
+651,4,"def min_bit_flips(start: int, goal: int) -> int:",0
+652,6,exor = start ^ goal,0
+653,7,,0
+654,8,count = 0,0
+655,9,while exor:,0
+656,11,exor = exor & (exor - 1),0
+657,12,,0
+658,13,count += 1,0
+659,14,return count,0
+660,15,,0
+661,16,,0
+662,17,x = 0,0
+663,18,start = 1,0
+664,19,goal = 2,0
+665,20,,0
+666,22,"x = min_bit_flips(start, goal)",0
+667,23,,0
+668,24,,0
+669,26,x = x | 1,1
+670,28,,0
+671,30,a = 1,0
+672,32,"demorgan = ~(a | b) == (~a & ~b)
+",0
+673,0,from inline import Here,0
+674,1,,0
+675,2,,0
+676,4,"def min_bit_flips(start: int, goal: int) -> int:",0
+677,6,exor = start ^ goal,0
+678,7,,0
+679,8,count = 0,0
+680,9,while exor:,0
+681,11,exor = exor & (exor - 1),0
+682,12,,0
+683,13,count += 1,0
+684,14,return count,0
+685,15,,0
+686,16,,0
+687,17,x = 0,0
+688,18,start = 1,0
+689,19,goal = 2,0
+690,20,,0
+691,22,"x = min_bit_flips(start, goal)",0
+692,23,,0
+693,24,,0
+694,26,x = x | 1,0
+695,27,,0
+696,28,,0
+697,30,a = 1,0
+698,31,b = -1,0
+699,0,import sys,0
+700,1,from inline import Here,0
+701,2,,0
+702,5,,0
+703,7,a = 4,0
+704,8,b = -6,0
+705,9,,0
+706,10,class Combining:,0
+707,11,"def getSum(self, a: int, b: int) -> int:",0
+708,12,"def add(a, b):",0
+709,13,if not a or not b:,0
+710,14,return a or b,0
+711,15,"return add(a ^ b, (a & b) << 1)",0
+712,16,,0
+713,17,if a * b < 0:  ,0
+714,18,if a > 0:,0
+715,19,"positive = self.getSum(b, a)",0
+716,20,return positive,0
+717,21,"if add(~a, 1) == b:  ",0
+718,22,zero = 0,0
+719,23,return 0,0
+720,24,"if add(~a, 1) < b:  ",0
+721,25,"return add(~add(add(~a, 1), add(~b, 1)), 1)  ",0
+722,26,,0
+723,27,,0
+724,28,"return add(a, b)  ",0
+725,29,,0
+726,30,combine = Combining(),0
+727,0,from inline import Here,0
+728,1,,0
+729,2,"def reverseBits(self, n: int) -> int:",0
+730,3,res = 0,0
+731,4,for i in range(32):,0
+732,5,bit = (n >> i) & 1,0
+733,9,"    return res
+",0
+734,0,,0
+735,4,,0
+736,5,import sys,0
+737,6,import random,0
+738,7,from inline import Here,0
+739,8,,0
+740,10,,0
+741,12,,0
+742,14,input_list = sys.argv[1:],0
+743,15,,0
+744,16,"bin_dig = [""1"", ""0""]",0
+745,17,for iter in range(10):,0
+746,19,"bin_num = ""1""",0
+747,20,for digit in range(3):,0
+748,21,"bin_num = bin_num + str(bin_dig[random.randint(0, 1)])",0
+749,22,"res = bin(int(bin_num, 2) << 1)",0
+750,23,"print(""Response: "" + ""0b"" + bin_num + "" * 0b10 = "" + str(res))",0
+751,24,,0
+752,26,"ans = bin(int(bin_num, 2) * 2)",0
+753,27,"print(""Answer: "" + ""0b"" + bin_num + "" * 0b10 = "" + str(ans) + ""\n"")",0
+754,28,,0
+755,0,,0
+756,4,,0
+757,5,import sys,0
+758,6,from inline import Here,0
+759,7,,0
+760,9,,0
+761,11,,0
+762,13,input_list = sys.argv[1:],0
+763,14,,0
+764,16,def dec_to_alpha(num):,0
+765,17,"base_num = """"",0
+766,18,while num > 0:,0
+767,19,dig = int(num % 36),0
+768,20,if dig < 10:,0
+769,21,base_num += str(dig),0
+770,22,else:,0
+771,23,base_num += chr(ord('a') + dig - 10),0
+772,24,num //= 36,0
+773,25,base_num = base_num[::-1]  ,0
+774,26,return base_num,0
+775,27,,0
+776,29,def encrypt(secret):,0
+777,30,"encryption = int(secret, base=36)",0
+778,31,key = len(secret),0
+779,32,return encryption << key,0
+780,33,,0
+781,34,"def decrypt(message, key):",0
+782,35,"decryption = int(message, base=36)",0
+783,36,return decryption >> key,0
+784,37,,0
+785,38,"secrets = [""hello"", ""password"", ""something"", ""code"", ""reply""]",0
+786,39,,0
+787,40,for iter in range(5):,0
+788,42,secret = secrets[iter],0
+789,43,key = len(secret),0
+790,44,"print(""expected answer: "" + secret)",0
+791,45,,0
+792,47,message = dec_to_alpha(encrypt(secret)),0
+793,48,"print(""encrypted message: "" + message)",0
+794,49,"print(""key: "" + str(key))",0
+795,50,,0
+796,52,"res = dec_to_alpha(decrypt(message, key))",0
+797,53,"print(""decrypted message: "" + res + ""\n"")",0
+798,54,,0
+799,0,from inline import Here,0
+800,1,,0
+801,2,def count_set_bits(n):,0
+802,3,count = 0,0
+803,4,while n:,0
+804,5,count += n & 1,0
+805,6,n >>= 1,0
+806,7,return count,0
+807,8,,0
+808,9,"def toggle_kth_bit(n, k):",0
+809,10,return n ^ (1 << (k - 1)),0
+810,11,,0
+811,12,def main():,0
+812,13,num = 5,0
+813,14,print(bin(num)) ,0
+814,15,"print(""Number of set bits:"", count_set_bits(num))",0
+815,17,"new_num = toggle_kth_bit(num, 2)",1
+816,20,for i in range(10):,0
+817,21,"new_num_2 = toggle_kth_bit(num, 1)",0
+818,22,print(bin(num)) ,0
+819,23,"print(""Number of set bits:"", count_set_bits(num))",0
+820,24,,0
+821,26,"    main()
+",0
+822,0,from inline import Here,0
+823,1,,0
+824,2,def count_set_bits(n):,0
+825,3,count = 0,0
+826,4,while n:,0
+827,5,count += n & 1,0
+828,6,n >>= 1,0
+829,7,return count,0
+830,8,,0
+831,9,"def toggle_kth_bit(n, k):",0
+832,10,return n ^ (1 << (k - 1)),0
+833,11,,0
+834,12,def main():,0
+835,13,num = 5,0
+836,14,print(bin(num)) ,0
+837,15,"print(""Number of set bits:"", count_set_bits(num))",0
+838,17,"new_num_1 = toggle_kth_bit(num, 4)",1
+839,19,for i in range(10):,0
+840,20,"new_num_2 = toggle_kth_bit(num, 1)",0
+841,21,print(bin(num)) ,0
+842,22,"print(""Number of set bits:"", count_set_bits(num))",0
+843,23,,0
+844,25,"    main()
+",0
+845,0,,0
+846,4,,0
+847,5,import sys,0
+848,6,import random,0
+849,7,from inline import Here,0
+850,8,,0
+851,10,,0
+852,13,,0
+853,15,input_list = sys.argv[1:],0
+854,16,,0
+855,17,for iter in range(10):,0
+856,19,"ans_str = """"",0
+857,20,,0
+858,22,"dec_str = """"",0
+859,23,"mask_str = """"",0
+860,24,for dig in range(8):,0
+861,25,"curr_dig = random.randint(0, 9)",0
+862,26,dec_str = dec_str + str(curr_dig),0
+863,27,if(curr_dig % 2 == 0):,0
+864,28,ans_str += str(curr_dig),0
+865,29,"mask_str += ""f""",0
+866,30,else:,0
+867,31,"ans_str += ""0""",0
+868,32,"mask_str += ""0""",0
+869,33,,0
+870,34,"dec_num = int(dec_str, 16)",0
+871,35,"hex_mask = int(mask_str, 16)",0
+872,36,"ans = int(ans_str, 16)",0
+873,37,,0
+874,38,"print(""  "" + hex(dec_num))",0
+875,39,"print(""& "" + hex(hex_mask))",0
+876,40,"print(""-----------"")",0
+877,41,"print(""  "" + hex(ans))",0
+878,42,print(),0
+879,43,,0
+880,0,from inline import Here,0
+881,1,,0
+882,2,def count_set_bits(n):,0
+883,3,count = 0,0
+884,4,while n:,0
+885,5,count += n & 1,0
+886,6,n >>= 1,0
+887,7,return count,0
+888,8,,0
+889,9,"def toggle_kth_bit(n, k):",0
+890,10,return n ^ (1 << (k - 1)),0
+891,11,,0
+892,12,def main():,0
+893,13,num = 5,0
+894,14,print(bin(num)) ,0
+895,15,"print(""Number of set bits:"", count_set_bits(num))",0
+896,17,"new_num_2 = toggle_kth_bit(num, 1)",1
+897,19,for i in range(10):,0
+898,20,"new_num_2 = toggle_kth_bit(num, 1)",0
+899,21,print(bin(num)) ,0
+900,22,"print(""Number of set bits:"", count_set_bits(num))",0
+901,23,,0
+902,25,"    main()
+",0
+903,0,from inline import Here,0
+904,1,,0
+905,2,def value_is_list(my_list):,0
+906,3,,0
+907,4,checked_list = [],0
+908,5,for item in my_list:,0
+909,6,"if isinstance(item, dict):",0
+910,7,checked_list.append(sort_json_policy_dict(item)),0
+911,8,"elif isinstance(item, list):",0
+912,9,checked_list.append(value_is_list(item)),0
+913,10,else:,0
+914,11,checked_list.append(item),0
+915,12,,0
+916,15,"checked_list.sort(key=lambda x: sorted(x.items()) if isinstance(x, dict) else x)",1
+917,19,"    return checked_list
+",0
+918,0,from inline import Here,0
+919,1,,0
+920,2,import pandas as pd,0
+921,3,,0
+922,4,""""""" A pie chart populated by a simple dict of values. This example demonstrates",0
+923,5,a cumulative sum transform for computing positions for the wedges.,0
+924,6,,0
+925,7,.. bokeh-example-metadata::,0
+926,8,":apis: bokeh.transform.cumsum, bokeh.plotting.figure.wedge",0
+927,9,:refs: :ref:`userguide_plotting` > :ref:`userguide_plotting_wedges_arcs`,0
+928,10,":keywords: cumsum, pandas, pie, wedge",0
+929,11,,0
+930,12,"""""""",0
+931,13,def __main__():,0
+932,14,from math import pi,0
+933,15,,0
+934,16,import pandas as pd,0
+935,17,,0
+936,18,from bokeh.palettes import Category20c,0
+937,19,"from bokeh.plotting import figure, show",0
+938,20,from bokeh.transform import cumsum,0
+939,21,,0
+940,22,x = {,0
+941,23,"""United States"": 157,",0
+942,24,"""United Kingdom"": 93,",0
+943,25,"""Japan"": 89,",0
+944,26,"""China"": 63,",0
+945,27,"""Germany"": 44,",0
+946,28,"""India"": 42,",0
+947,29,"""Italy"": 40,",0
+948,30,"""Australia"": 35,",0
+949,31,"""Brazil"": 32,",0
+950,32,"""France"": 31,",0
+951,33,"""Taiwan"": 31,",0
+952,34,"""Spain"": 29,",0
+953,35,},0
+954,36,,0
+955,37,"data = pd.Series(x).reset_index(name=""value"").rename(columns={""index"": ""country""})",0
+956,38,"data[""angle""] = data[""value""] / data[""value""].sum() * 2 * pi",1
+957,40,"data[""color""] = Category20c[len(x)]",0
+958,41,,0
+959,42,p = figure(,0
+960,43,"height=350,",0
+961,44,"title=""Pie Chart"",",0
+962,45,"toolbar_location=None,",0
+963,46,"tools=""hover"",",0
+964,47,"tooltips=""@country: @value"",",0
+965,48,"x_range=(-0.5, 1.0),",0
+966,49,),0
+967,50,,0
+968,51,p.wedge(,0
+969,52,"x=0,",0
+970,53,"y=1,",0
+971,54,"radius=0.4,",0
+972,55,"start_angle=cumsum(""angle"", include_zero=True),",0
+973,56,"end_angle=cumsum(""angle""),",0
+974,57,"line_color=""white"",",0
+975,58,"fill_color=""color"",",0
+976,59,"legend_field=""country"",",0
+977,60,"source=data,",0
+978,61,),0
+979,62,,0
+980,63,p.axis.axis_label = None,0
+981,64,p.axis.visible = False,0
+982,65,p.grid.grid_line_color = None,0
+983,67,"    show(p)
+",0
+984,0,from inline import Here,0
+985,1,,0
+986,2,def alphanumeric_encoding(str):,0
+987,3,code_list = [alphanum_list.index(i) for i in str],0
+988,4,"code = """"",0
+989,5,"for i in range(1, len(code_list), 2):",0
+990,6,c = bin(code_list[i - 1] * 45 + code_list[i])[2:],1
+991,8,"c = ""0"" * (11 - len(c)) + c",1
+992,10,code += c,0
+993,11,if i != len(code_list) - 1:,0
+994,12,c = bin(code_list[-1])[2:],0
+995,13,"c = ""0"" * (6 - len(c)) + c",0
+996,14,code += c,0
+997,16,"    return code
+",0
+998,0,from inline import Here,0
+999,1,,0
+1000,2,def benchmark(args):,0
+1001,3,if args.amp:,0
+1002,4,"_logger.warning(""Overriding precision to 'amp' since --amp flag set."")",0
+1003,5,"args.precision = ""amp""",0
+1004,6,_logger.info(,0
+1005,7,"f""Benchmarking in {args.precision} precision. """,0
+1006,8,"f'{""NHWC"" if args.channels_last else ""NCHW""} layout. '",0
+1007,9,"f'torchscript {""enabled"" if args.torchscript else ""disabled""}'",0
+1008,10,),0
+1009,11,,0
+1010,12,bench_kwargs = vars(args).copy(),0
+1011,13,"bench_kwargs.pop(""amp"")",0
+1012,14,"model = bench_kwargs.pop(""model"")",0
+1013,15,"batch_size = bench_kwargs.pop(""batch_size"")",0
+1014,16,,0
+1015,17,"bench_fns = (InferenceBenchmarkRunner,)",0
+1016,18,"prefixes = (""infer"",)",0
+1017,19,"if args.bench == ""both"":",0
+1018,20,"bench_fns = (InferenceBenchmarkRunner, TrainBenchmarkRunner)",0
+1019,21,"prefixes = (""infer"", ""train"")",0
+1020,22,"elif args.bench == ""train"":",0
+1021,23,"bench_fns = (TrainBenchmarkRunner,)",0
+1022,24,"prefixes = (""train"",)",0
+1023,25,"elif args.bench.startswith(""profile""):",0
+1024,27,"if ""deepspeed"" in args.bench:",0
+1025,28,assert (,0
+1026,29,has_deepspeed_profiling,0
+1027,30,"), ""deepspeed must be installed to use deepspeed flop counter""",0
+1028,31,"bench_kwargs[""profiler""] = ""deepspeed""",0
+1029,32,"elif ""fvcore"" in args.bench:",0
+1030,33,assert (,0
+1031,34,has_fvcore_profiling,0
+1032,35,"), ""fvcore must be installed to use fvcore flop counter""",0
+1033,36,"bench_kwargs[""profiler""] = ""fvcore""",0
+1034,37,"bench_fns = (ProfileRunner,)",0
+1035,38,batch_size = 1,0
+1036,39,,0
+1037,40,model_results = OrderedDict(model=model),0
+1038,41,"for prefix, bench_fn in zip(prefixes, bench_fns):",0
+1039,42,run_results = _try_run(,0
+1040,43,"model, bench_fn, initial_batch_size=batch_size, bench_kwargs=bench_kwargs",0
+1041,44,),0
+1042,45,"if prefix and ""error"" not in run_results:",0
+1043,46,"run_results = {""_"".join([prefix, k]): v for k, v in run_results.items()}",1
+1044,48,model_results.update(run_results),0
+1045,49,"if ""error"" not in model_results:",0
+1046,50,param_count = model_results.pop(,0
+1047,51,"""infer_param_count"", model_results.pop(""train_param_count"", 0)",0
+1048,52,),0
+1049,53,"model_results.setdefault(""param_count"", param_count)",0
+1050,55,"    return model_results
+",0
+1051,0,import sys,0
+1052,1,from inline import Here,0
+1053,2,,0
+1054,5,,0
+1055,7,"nums = [1, 2, 3, 4, 5, 10, 1]",0
+1056,8,"nums2 = [1, 2, 3, 4, 5, 10]",0
+1057,9,,0
+1058,10,class Solution:,0
+1059,11,"def containsDuplicate(self, nums: list[int]) -> bool:",0
+1060,12,repeat = set(),0
+1061,13,,0
+1062,14,for n in nums:,0
+1063,15,if n in nums:,0
+1064,16,return True,0
+1065,17,repeat.add(n),0
+1066,18,,0
+1067,19,return False,0
+1068,20,,0
+1069,21,solution = Solution(),0
+1070,0,import sys,0
+1071,1,from inline import Here,0
+1072,2,,0
+1073,5,,0
+1074,7,class TreeNode:,0
+1075,8,"def __init__(self, x):",0
+1076,9,self.val = x,0
+1077,10,self.left = None,0
+1078,11,self.right = None,0
+1079,12,,0
+1080,14,root = TreeNode(5),0
+1081,15,root.left = TreeNode(10),0
+1082,16,root.right = TreeNode(15),0
+1083,17,,0
+1084,18,class Solution:,0
+1085,19,"def kthSmallest(self, root: TreeNode, k: int) -> int:",0
+1086,20,stack = [],0
+1087,21,curr = root,0
+1088,22,,0
+1089,23,while stack or curr:,0
+1090,24,while curr:,0
+1091,25,stack.append(curr),0
+1092,26,curr = curr.left,0
+1093,27,curr = stack.pop(),0
+1094,28,k -= 1,0
+1095,29,if k == 0:,0
+1096,30,return curr.val,0
+1097,31,prev_val = curr.val,0
+1098,32,curr = curr.right,0
+1099,33,,0
+1100,34,solution = Solution(),0
+1101,35,r = root,0
+1102,0,import sys,0
+1103,1,from inline import Here,0
+1104,2,,0
+1105,5,,0
+1106,6,"example = [1, 2, 0, 0, 3]",0
+1107,7,"example2 = [1, 3, 0, 0, 3]",0
+1108,8,,0
+1109,9,class JumpGame:,0
+1110,10,"def canJump(self, nums: list[int]) -> bool:",0
+1111,11,goal = len(nums) - 1,0
+1112,12,,0
+1113,13,"for i in range(len(nums) - 2, -1, -1):",0
+1114,14,if i + nums[i] >= goal:,0
+1115,15,goal = i,0
+1116,16,return goal == 0,0
+1117,17,,0
+1118,18,Jumper = JumpGame(),0
+1119,19,Boolean = Jumper.canJump(example),1
+1120,22,"print(Boolean)
+",0
+1121,0,import sys,0
+1122,1,from inline import Here,0
+1123,2,,0
+1124,5,,0
+1125,6,"example = [1, 2, 0, 0, 3]",0
+1126,7,"example2 = [1, 3, 0, 0, 3]",0
+1127,8,,0
+1128,9,class JumpGame:,0
+1129,10,"def canJump(self, nums: list[int]) -> bool:",0
+1130,11,goal = len(nums) - 1,0
+1131,12,,0
+1132,13,"for i in range(len(nums) - 2, -1, -1):",0
+1133,14,if i + nums[i] >= goal:,0
+1134,15,goal = i,0
+1135,16,return goal == 0,0
+1136,17,,0
+1137,18,Jumper = JumpGame(),0
+1138,19,,0
+1139,20,Boolean = Jumper.canJump(example2),1
+1140,23,"print(Boolean)
+",0
+1141,0,from inline import Here,0
+1142,1,,0
+1143,2,"def multiply(self, num1: str, num2: str) -> str:",0
+1144,3,"if ""0"" in [num1, num2]:",0
+1145,4,"return ""0""",0
+1146,5,,0
+1147,6,res = [0] * (len(num1) + len(num2)),0
+1148,9,"num1, num2 = num1[::-1], num2[::-1]",0
+1149,10,for i1 in range(len(num1)):,0
+1150,11,for i2 in range(len(num2)):,0
+1151,12,digit = int(num1[i1]) * int(num2[i2]),0
+1152,13,res[i1 + i2] += digit,0
+1153,14,res[i1 + i2 + 1] += res[i1 + i2] // 10,0
+1154,15,res[i1 + i2] = res[i1 + i2] % 10,0
+1155,16,,0
+1156,17,"res, beg = res[::-1], 0",0
+1157,18,while beg < len(res) and res[beg] == 0:,0
+1158,19,beg += 1,0
+1159,21,"    return """".join(res)
+",0
+1160,0,from inline import Here,0
+1161,1,,0
+1162,2,"def isMatch(self, s: str, p: str) -> bool:",0
+1163,3,cache = [[False] * (len(p) + 1) for i in range(len(s) + 1)],0
+1164,6,cache[len(s)][len(p)] = True,0
+1165,7,,0
+1166,8,"for i in range(len(s), -1, -1):",0
+1167,9,"for j in range(len(p) - 1, -1, -1):",0
+1168,10,"match = i < len(s) and (s[i] == p[j] or p[j] == ""."")",0
+1169,11,,0
+1170,12,"if (j + 1) < len(p) and p[j + 1] == ""*"":",0
+1171,13,cache[i][j] = cache[i][j + 2],0
+1172,14,if match:,0
+1173,15,cache[i][j] = cache[i + 1][j] or cache[i][j],0
+1174,16,elif match:,0
+1175,17,cache[i][j] = cache[i + 1][j + 1],0
+1176,19,"    return cache[0][0]
+",0
+1177,0,from inline import Here,0
+1178,1,from typing import List,0
+1179,2,,0
+1180,3,"def shiftGrid(self, grid: List[List[int]], k: int) -> List[List[int]]:",0
+1181,4,"M, N = len(grid), len(grid[0])",0
+1182,5,,0
+1183,6,"def posToVal(r, c):",0
+1184,7,return r * N + c,0
+1185,8,def valToPos(v):,0
+1186,9,"return [v // N, v % N]",0
+1187,10,,0
+1188,11,res = [[0] * N for i in range(M)],0
+1189,14,for r in range(M):,0
+1190,15,for c in range(N):,0
+1191,16,"newVal = (posToVal(r, c) + k) % (M * N)",0
+1192,17,"newR, newC = valToPos(newVal)",0
+1193,19,"    return res
+",0
+1194,0,from inline import Here,0
+1195,1,,0
+1196,2,"def convert(self, s: str, numRows: int) -> str:",0
+1197,3,"template = list(range(numRows)) + list(range(numRows - 2, 0, -1))",0
+1198,6,result = [''] * numRows,0
+1199,7,"for i, char in enumerate(s):",0
+1200,9,"    return ''.join(result)
+",0
+1201,0,from inline import Here,0
+1202,1,from typing import List,0
+1203,2,,0
+1204,3,"def carFleet(self, target: int, position: List[int], speed: List[int]) -> int:",0
+1205,4,"pair = [(p, s) for p, s in zip(position, speed)]",0
+1206,7,pair.sort(reverse=True),0
+1207,8,stack = [],0
+1208,9,"for p, s in pair:  ",0
+1209,10,stack.append((target - p) / s),0
+1210,11,if len(stack) >= 2 and stack[-1] <= stack[-2]:,0
+1211,13,"        return len(stack)
+",0
+1212,0,from inline import Here,0
+1213,1,from math import inf,0
+1214,2,,0
+1215,3,"def minDistance(self, word1: str, word2: str) -> int:",0
+1216,4,"dp = [[float(""inf"")] * (len(word2) + 1) for i in range(len(word1) + 1)]",0
+1217,7,,0
+1218,8,for j in range(len(word2) + 1):,0
+1219,9,dp[len(word1)][j] = len(word2) - j,0
+1220,10,for i in range(len(word1) + 1):,0
+1221,11,dp[i][len(word2)] = len(word1) - i,0
+1222,12,,0
+1223,13,"for i in range(len(word1) - 1, -1, -1):",0
+1224,14,"for j in range(len(word2) - 1, -1, -1):",0
+1225,15,if word1[i] == word2[j]:,0
+1226,16,dp[i][j] = dp[i + 1][j + 1],0
+1227,17,else:,0
+1228,19,"        return dp[0][0]
+",0
+1229,0,import sys,0
+1230,1,from inline import Here,0
+1231,2,,0
+1232,3,input_list = sys.argv[1:],0
+1233,4,"result = list(map(str.split(""$""), input_list))",1
+1234,7,    ),0
+1235,0,import sys,0
+1236,1,from inline import Here,0
+1237,2,,0
+1238,5,,0
+1239,7,"ex = [-1, -1, 2]",0
+1240,8,,0
+1241,9,class sol:,0
+1242,10,"def threeSum(self, nums: list[int]) -> list[list[int]]:",0
+1243,11,res = [],0
+1244,12,nums.sort(),0
+1245,13,,0
+1246,14,"for i, a in enumerate(nums):",0
+1247,16,if a > 0:,0
+1248,17,break,0
+1249,18,,0
+1250,19,if i > 0 and a == nums[i - 1]:,0
+1251,20,continue,0
+1252,21,,0
+1253,22,"l, r = i + 1, len(nums) - 1",0
+1254,23,while l < r:,0
+1255,24,threeSum = a + nums[l] + nums[r],0
+1256,25,if threeSum > 0:,0
+1257,26,r -= 1,0
+1258,27,elif threeSum < 0:,0
+1259,28,l += 1,0
+1260,29,else:,0
+1261,30,"res.append([a, nums[l], nums[r]])",0
+1262,31,check = a + nums[l] + nums[r],1
+1263,33,l += 1,0
+1264,34,r -= 1,0
+1265,35,while nums[l] == nums[l - 1] and l < r:,0
+1266,36,l += 1,0
+1267,37,return res,0
+1268,38,,0
+1269,39,obj = sol(),0
+1270,41,"print(trio)
+",0
+1271,0,from inline import Here,0
+1272,1,,0
+1273,2,class Solution:,0
+1274,3,"def reverse(self, x):",0
+1275,5,flag = True if x < 0 else False,0
+1276,6,if flag:,0
+1277,7,x = -x,0
+1278,8,x = str(x)[::-1],1
+1279,10,,0
+1280,11,if flag:,0
+1281,12,"x = ""-"" + x",0
+1282,13,,0
+1283,14,value = 2 ** 31,0
+1284,15,x = int(x),0
+1285,16,if -value <= x < value:,0
+1286,18,"        return 0
+",0
+1287,1,from inline import Here,0
+1288,2,,0
+1289,3,class Solution(object):,0
+1290,4,"def isMatch(self, s, p):",0
+1291,5,"""""""",0
+1292,6,:type s: str,0
+1293,7,:type p: str,0
+1294,8,:rtype: bool,0
+1295,9,"""""""",0
+1296,11,if s == p:,0
+1297,12,return True,0
+1298,13,"m, n = len(s), len(p)",0
+1299,14,dp = [[False] * (n + 1) for _ in range(m + 1)],1
+1300,16,,0
+1301,17,print(dp),0
+1302,18,dp[0][0] = True,0
+1303,19,"for j in range(1, n):",0
+1304,20,if p[j] == '*' and dp[0][j - 1]:,0
+1305,21,dp[0][j + 1] = True,0
+1306,23,for i in range(m):,0
+1307,24,for j in range(n):,0
+1308,25,if p[j] == '.' or p[j] == s[i]:,0
+1309,26,dp[i + 1][j + 1] = dp[i][j],0
+1310,27,elif p[j] == '*':,0
+1311,28,if p[j - 1] != s[i] and p[j - 1] != '.':,0
+1312,29,dp[i + 1][j + 1] = dp[i + 1][j - 1],0
+1313,30,else:,0
+1314,31,dp[i + 1][j + 1] = dp[i + 1][j] or dp[i][j + 1] or dp[i + 1][j - 1],0
+1315,32,return dp[m][n],0
+1316,34,"print(Solution.isMatch(""sol"", ""hello"", ""ab""))
+",0
+1317,1,from inline import Here,0
+1318,2,,0
+1319,3,class Solution:,0
+1320,4,,0
+1321,5,"def count(self, x):",0
+1322,6,m = list(x),0
+1323,7,print(m),0
+1324,8,res = [],0
+1325,9,m.append(None),0
+1326,10,test = m[len(m) - 1],1
+1327,12,,0
+1328,13,print(m),0
+1329,14,"i , j = 0 , 0",0
+1330,15,while i < len(m) - 1:,0
+1331,16,j += 1,0
+1332,17,if m[j] != m[i]:,0
+1333,19,"res += [j - i, m[i]]",0
+1334,20,i = j,0
+1335,21,return ''.join(str(s) for s in res),0
+1336,23,"Solution.count(""l"", '543')",0
+1337,1,,0
+1338,2,from inline import Here,0
+1339,3,,0
+1340,4,class Solution(object):,0
+1341,5,"def combinationSum2(self, candidates, target):",0
+1342,6,"""""""",0
+1343,7,:type candidates: List[int],0
+1344,8,:type target: int,0
+1345,9,:rtype: List[List[int]],0
+1346,10,"""""""",0
+1347,11,candidates2 = candidates.sort(),1
+1348,13,,0
+1349,14,dp = [[] for _ in range(target + 1)],0
+1350,15,dp[0].append([]),0
+1351,16,"for i in range(1, target + 1):",0
+1352,17,for j in range(len(candidates)):,0
+1353,18,if candidates[j] > i:,0
+1354,19,break,0
+1355,20,for k in range(len(dp[i - candidates[j]])):,0
+1356,21,temp = dp[i - candidates[j]][k][:],0
+1357,23,if len(temp) > 0 and temp[-1] >= j:,0
+1358,24,continue,0
+1359,26,temp.append(j),0
+1360,27,dp[i].append(temp),0
+1361,28,res = [],0
+1362,29,check = {},0
+1363,30,for temp in dp[target]:,0
+1364,31,value = [candidates[t] for t in temp],0
+1365,32,try:,0
+1366,33,check[str(value)] += 1,0
+1367,34,except KeyError:,0
+1368,35,check[str(value)] = 1,0
+1369,37,        return res,0
+1370,1,from inline import Here,0
+1371,2,,0
+1372,3,class Solution(object):,0
+1373,4,"def merge(self, intervals):",0
+1374,5,"""""""",0
+1375,6,:type intervals: List[Interval],0
+1376,7,:rtype: List[Interval],0
+1377,8,"""""""",0
+1378,9,if intervals is None:,0
+1379,10,return,0
+1380,11,ls = len(intervals),0
+1381,12,if ls <= 1:,0
+1382,13,return intervals,0
+1383,15,print(intervals),0
+1384,16,temp = intervals.sort(key=lambda x: x[0]),1
+1385,19,,0
+1386,20,print(intervals),0
+1387,21,pos = 0,0
+1388,22,while pos < len(intervals) - 1:,0
+1389,24,if intervals[pos][1] >= intervals[pos + 1][0]:,0
+1390,25,next = intervals.pop(pos + 1),0
+1391,27,if next[1] > intervals[pos][1]:,0
+1392,28,intervals[pos][1] = next[1],0
+1393,30,else:,0
+1394,31,pos += 1,0
+1395,32,return intervals,0
+1396,33,,0
+1397,34,,0
+1398,36,"print (s.merge([[5, 10],[1,3],[2,6],[8,10],[15,18]]))",0
+1399,1,from inline import Here,0
+1400,2,,0
+1401,3,class Solution(object):,0
+1402,4,"def merge(self, intervals):",0
+1403,5,"""""""",0
+1404,6,:type intervals: List[Interval],0
+1405,7,:rtype: List[Interval],0
+1406,8,"""""""",0
+1407,9,if intervals is None:,0
+1408,10,return,0
+1409,11,ls = len(intervals),0
+1410,12,if ls <= 1:,0
+1411,13,return intervals,0
+1412,15,print(intervals),0
+1413,16,temp = intervals.sort(key=lambda x: x[0]),1
+1414,18,,0
+1415,19,print(intervals),0
+1416,20,pos = 0,0
+1417,21,while pos < len(intervals) - 1:,0
+1418,23,if intervals[pos][1] >= intervals[pos + 1][0]:,0
+1419,24,next = intervals.pop(pos + 1),0
+1420,26,if next[1] > intervals[pos][1]:,0
+1421,27,intervals[pos][1] = next[1],0
+1422,29,else:,0
+1423,30,pos += 1,0
+1424,31,return intervals,0
+1425,32,,0
+1426,33,,0
+1427,35,"print (s.merge([[5, 10],[1,3],[2,6],[8,10],[15,18]]))",0
+1428,1,from inline import Here,0
+1429,2,,0
+1430,3,class Solution(object):,0
+1431,4,"def lengthOfLastWord(self, s):",0
+1432,5,"""""""",0
+1433,6,:type s: str,0
+1434,7,:rtype: int,0
+1435,8,"""""""",0
+1436,9,if len(s) == 0:,0
+1437,10,return 0,0
+1438,11,temp = s.split(' '),0
+1439,12,print(temp),0
+1440,13,temp2 = [t for t in temp if len(t) > 0],1
+1441,15,,0
+1442,16,print(temp),0
+1443,17,if len(temp) == 0:,0
+1444,18,return 0,0
+1445,19,else:,0
+1446,20,return len(temp[-1]),0
+1447,21,,0
+1448,23,"s.lengthOfLastWord(""hell o         my name is"")",0
+1449,0,import sys,0
+1450,1,from inline import Here,0
+1451,2,,0
+1452,5,,0
+1453,7,"ex = [-1, -1, 2]",0
+1454,8,,0
+1455,9,class sol:,0
+1456,10,"def threeSum(self, nums: list[int]) -> list[list[int]]:",0
+1457,11,res = [],0
+1458,12,nums.sort(),0
+1459,13,,0
+1460,14,"for i, a in enumerate(nums):",0
+1461,16,if a > 0:,0
+1462,17,break,0
+1463,18,,0
+1464,19,if i > 0 and a == nums[i - 1]:,0
+1465,20,continue,0
+1466,21,,0
+1467,22,"l, r = i + 1, len(nums) - 1",0
+1468,23,while l < r:,0
+1469,24,threeSum = a + nums[l] + nums[r],0
+1470,25,if threeSum > 0:,0
+1471,26,r -= 1,0
+1472,27,elif threeSum < 0:,0
+1473,28,l += 1,0
+1474,29,else:,0
+1475,30,"res.append([a, nums[l], nums[r]])",0
+1476,31,check = a + nums[l] + nums[r],0
+1477,32,l += 1,0
+1478,33,r -= 1,0
+1479,34,while nums[l] == nums[l - 1] and l < r:,0
+1480,35,l += 1,0
+1481,36,return res,0
+1482,37,,0
+1483,38,obj = sol(),0
+1484,39,trio = obj.threeSum(ex),1
+1485,41,"print(trio)
+",0
+1486,0,import math,0
+1487,1,import sys,0
+1488,2,from inline import Here,0
+1489,3,,0
+1490,6,,0
+1491,8,"case = [2, 3, 7, 11]",0
+1492,9,,0
+1493,10,class bananas:,0
+1494,11,"def minEatingSpeed(self, piles: list[int], h: int) -> int:",0
+1495,12,"l, r = 1, max(piles)",0
+1496,13,res = max(piles),0
+1497,14,,0
+1498,15,while l <= r:,0
+1499,16,k = (l + r) // 2,0
+1500,17,,0
+1501,18,totalTime = 0,0
+1502,19,for p in piles:,0
+1503,20,totalTime += math.ceil(p / k),0
+1504,21,if totalTime <= h:,0
+1505,22,"res = min(res, k)",0
+1506,23,r = k - 1,0
+1507,24,else:,0
+1508,25,l = k + 1,0
+1509,26,return res,0
+1510,27,,0
+1511,28,solution = bananas(),0
+1512,29,time = 8,0
+1513,0,import sys,0
+1514,1,from inline import Here,0
+1515,2,,0
+1516,5,,0
+1517,6,class ListNode:,0
+1518,7,"def __init__(self, x):",0
+1519,8,self.val = x,0
+1520,9,self.next = None,0
+1521,10,,0
+1522,12,Root = ListNode(1),0
+1523,13,Root.next = ListNode(2),0
+1524,14,Root.next.next = Root,0
+1525,15,,0
+1526,16,Root2 = ListNode(1),0
+1527,17,Root2.next = ListNode(2),0
+1528,18,Root2.next.next = ListNode(3),0
+1529,19,,0
+1530,20,class Solution:,0
+1531,21,"def hasCycle(self, head: ListNode) -> bool:",0
+1532,22,"slow, fast = head, head",0
+1533,23,,0
+1534,24,while fast and fast.next:,0
+1535,25,slow = slow.next,0
+1536,26,fast = fast.next.next,0
+1537,27,if slow == fast:,0
+1538,28,x = slow,1
+1539,30,return True,0
+1540,31,return False,0
+1541,33,"obj = Solution()
+",0
+1542,0,import sys,0
+1543,1,from inline import Here,0
+1544,2,,0
+1545,5,,0
+1546,6,class ListNode:,0
+1547,7,"def __init__(self, x):",0
+1548,8,self.val = x,0
+1549,9,self.next = None,0
+1550,10,,0
+1551,12,Root = ListNode(1),0
+1552,13,Root.next = ListNode(2),0
+1553,14,Root.next.next = Root,0
+1554,15,,0
+1555,16,Root2 = ListNode(1),0
+1556,17,Root2.next = ListNode(2),0
+1557,18,Root2.next.next = ListNode(3),0
+1558,19,,0
+1559,20,class Solution:,0
+1560,21,"def hasCycle(self, head: ListNode) -> bool:",0
+1561,22,"slow, fast = head, head",0
+1562,23,,0
+1563,24,while fast and fast.next:,0
+1564,25,slow = slow.next,0
+1565,26,fast = fast.next.next,0
+1566,27,if slow == fast:,0
+1567,28,x = slow,0
+1568,29,return True,0
+1569,30,return False,0
+1570,31,,0
+1571,32,obj = Solution(),0
+1572,33,,0
+1573,0,import sys,0
+1574,1,from inline import Here,0
+1575,2,,0
+1576,5,,0
+1577,6,class ListNode:,0
+1578,7,"def __init__(self, x):",0
+1579,8,self.val = x,0
+1580,9,self.next = None,0
+1581,10,,0
+1582,12,Root = ListNode(1),0
+1583,13,Root.next = ListNode(2),0
+1584,14,Root.next.next = Root,0
+1585,15,,0
+1586,16,Root2 = ListNode(1),0
+1587,17,Root2.next = ListNode(2),0
+1588,18,Root2.next.next = ListNode(3),0
+1589,19,,0
+1590,20,class Solution:,0
+1591,21,"def hasCycle(self, head: ListNode) -> bool:",0
+1592,22,"slow, fast = head, head",0
+1593,23,,0
+1594,24,while fast and fast.next:,0
+1595,25,slow = slow.next,0
+1596,26,fast = fast.next.next,0
+1597,27,if slow == fast:,0
+1598,28,x = slow,0
+1599,29,return True,0
+1600,30,return False,0
+1601,31,,0
+1602,32,obj = Solution(),0
+1603,33,,0
+1604,0,import sys,0
+1605,1,from inline import Here,0
+1606,2,,0
+1607,5,,0
+1608,7,class TreeNode:,0
+1609,8,"def __init__(self, x):",0
+1610,9,self.val = x,0
+1611,10,self.left = None,0
+1612,11,self.right = None,0
+1613,12,,0
+1614,14,root = TreeNode(5),0
+1615,15,root.left = TreeNode(10),0
+1616,16,root.right = TreeNode(15),0
+1617,17,,0
+1618,18,class Solution:,0
+1619,19,"def kthSmallest(self, root: TreeNode, k: int) -> int:",0
+1620,20,stack = [],0
+1621,21,curr = root,1
+1622,23,,0
+1623,24,while stack or curr:,0
+1624,25,while curr:,0
+1625,26,stack.append(curr),0
+1626,27,curr = curr.left,0
+1627,28,curr = stack.pop(),0
+1628,29,k -= 1,0
+1629,30,if k == 0:,0
+1630,31,return curr.val,0
+1631,32,prev_val = curr.val,0
+1632,33,curr = curr.right,0
+1633,34,,0
+1634,35,solution = Solution(),0
+1635,37,"answer = solution.kthSmallest(r, 1)
+",0
+1636,0,import sys,0
+1637,1,from inline import Here,0
+1638,2,,0
+1639,5,,0
+1640,7,class TreeNode:,0
+1641,8,"def __init__(self, x):",0
+1642,9,self.val = x,0
+1643,10,self.left = None,0
+1644,11,self.right = None,0
+1645,12,,0
+1646,14,root = TreeNode(5),0
+1647,15,root.left = TreeNode(10),0
+1648,16,root.right = TreeNode(15),0
+1649,17,,0
+1650,18,class Solution:,0
+1651,19,"def kthSmallest(self, root: TreeNode, k: int) -> int:",0
+1652,20,stack = [],0
+1653,21,curr = root,0
+1654,22,,0
+1655,23,while stack or curr:,0
+1656,24,while curr:,0
+1657,25,stack.append(curr),0
+1658,26,curr = curr.left,0
+1659,27,curr = stack.pop(),0
+1660,28,k -= 1,0
+1661,29,if k == 0:,0
+1662,30,return curr.val,0
+1663,31,prev_val = curr.val,0
+1664,32,curr = curr.right,1
+1665,34,,0
+1666,35,solution = Solution(),0
+1667,37,"answer = solution.kthSmallest(r, 1)
+",0
+1668,0,from inline import Here,0
+1669,1,from typing import List,0
+1670,2,,0
+1671,3,"def maxArea(self, height: List[int]) -> int:",0
+1672,4,"l, r = 0, len(height) - 1",0
+1673,5,res = 0,0
+1674,6,while l < r:,0
+1675,7,"res = max(res, min(height[l], height[r]) * (r - l))",0
+1676,10,if height[l] < height[r]:,0
+1677,11,l += 1,0
+1678,12,elif height[r] <= height[l]:,0
+1679,14,"    return res
+",0
+1680,0,from inline import Here,0
+1681,1,from typing import List,0
+1682,2,,0
+1683,3,"def search(self, nums: List[int], target: int) -> int:",0
+1684,4,"l, r = 0, len(nums) - 1",0
+1685,5,,0
+1686,6,while l <= r:,0
+1687,7,m = l + ((r - l) // 2),0
+1688,10,if nums[m] > target:,0
+1689,11,r = m - 1,0
+1690,12,elif nums[m] < target:,0
+1691,13,l = m + 1,0
+1692,14,else:,0
+1693,16,"    return -1
+",0
+1694,0,from inline import Here,0
+1695,1,from typing import List,0
+1696,2,,0
+1697,3,"def missingRolls(self, rolls: List[int], mean: int, n: int) -> List[int]:",0
+1698,4,m = len(rolls),0
+1699,5,curSum = sum(rolls),0
+1700,6,missingSum = mean * (n + m) - curSum,0
+1701,9,if missingSum < n or missingSum > 6*n: return [],0
+1702,10,,0
+1703,11,"part, rem = divmod(missingSum, n)",0
+1704,12,ans = [part] * n,0
+1705,13,for i in range(rem):,0
+1706,15,"    return ans
+",0
+1707,0,from typing import List,0
+1708,1,from inline import Here,0
+1709,2,import math,0
+1710,3,,0
+1711,4,"def minEatingSpeed(self, piles: List[int], h: int) -> int:",0
+1712,5,"l, r = 1, max(piles)",0
+1713,6,res = max(piles),0
+1714,7,while l <= r:,0
+1715,8,k = (l + r) // 2,0
+1716,9,totalTime = 0,0
+1717,10,for p in piles:,0
+1718,11,totalTime += math.ceil(p / k),0
+1719,14,if totalTime <= h:,0
+1720,15,"res = min(res, k)",0
+1721,16,r = k - 1,0
+1722,17,else:,0
+1723,19,"    return res
+",0
+1724,0,from inline import Here,0
+1725,1,from typing import List,0
+1726,2,,0
+1727,3,"def minCostConnectPoints(self, points: List[List[int]]) -> int:",0
+1728,4,N = len(points),0
+1729,5,adj = {i: [] for i in range(N)}  ,0
+1730,6,for i in range(N):,0
+1731,7,"x1, y1 = points[i]",0
+1732,8,"for j in range(i + 1, N):",0
+1733,9,"x2, y2 = points[j]",0
+1734,10,dist = abs(x1 - x2) + abs(y1 - y2),1
+1735,12,"adj[i].append([dist, j])",0
+1736,13,"adj[j].append([dist, i])",0
+1737,14,,0
+1738,16,res = 0,0
+1739,17,visit = set(),0
+1740,18,"minH = [[0, 0]]  ",0
+1741,19,while len(visit) < N:,0
+1742,20,"cost, i = heapq.heappop(minH)",0
+1743,21,if i in visit:,0
+1744,22,continue,0
+1745,23,res += cost,0
+1746,24,visit.add(i),0
+1747,25,"for neiCost, nei in adj[i]:",0
+1748,26,if nei not in visit:,0
+1749,28,"        return res
+",0
+1750,1,,0
+1751,2,import math,0
+1752,3,from inline import Here,0
+1753,4,,0
+1754,5,MAX_INT = 50,0
+1755,6,,0
+1756,7,class Solution(object):,0
+1757,8,"def divide(self, dividend, divisor):",0
+1758,9,if divisor == 0:,0
+1759,10,return MAX_INT,0
+1760,11,if dividend == 0:,0
+1761,12,return 0,0
+1762,13,isPositive = (dividend < 0) == (divisor < 0),0
+1763,14,print(isPositive),1
+1764,16,,0
+1765,17,m = abs(dividend),0
+1766,18,n = abs(divisor),0
+1767,20,res = math.log(m) - math.log(n),0
+1768,21,res = int(math.exp(res)),0
+1769,22,if isPositive:,0
+1770,23,"return min(res, 2147483647)",0
+1771,24,"return max(0 - res, -2147483648)",0
+1772,26,"Solution.divide(""s"", 5, 3)",0
+1773,1,,0
+1774,2,import math,0
+1775,3,from inline import Here,0
+1776,4,,0
+1777,5,MAX_INT = 50,0
+1778,6,,0
+1779,7,class Solution(object):,0
+1780,8,"def divide(self, dividend, divisor):",0
+1781,9,if divisor == 0:,0
+1782,10,return MAX_INT,0
+1783,11,if dividend == 0:,0
+1784,12,return 0,0
+1785,13,isPositive = (dividend < 0) == (divisor < 0),0
+1786,14,print(isPositive),1
+1787,16,,0
+1788,17,m = abs(dividend),0
+1789,18,n = abs(divisor),0
+1790,20,res = math.log(m) - math.log(n),0
+1791,21,res = int(math.exp(res)),0
+1792,22,if isPositive:,0
+1793,23,"return min(res, 2147483647)",0
+1794,24,"return max(0 - res, -2147483648)",0
+1795,26,"Solution.divide(""s"", 5, 3)",0
+1796,1,,0
+1797,2,from inline import Here,0
+1798,3,,0
+1799,4,class Solution(object):,0
+1800,5,"def rotate(self, matrix):",0
+1801,6,"""""""",0
+1802,7,:type matrix: List[List[int]],0
+1803,8,":rtype: void Do not return anything, modify matrix in-place instead.",0
+1804,9,"""""""",0
+1805,11,if matrix is None or len(matrix) == 1:,1
+1806,13,return,0
+1807,14,ls = len(matrix),0
+1808,15,for i in range(ls / 2):,0
+1809,17,"begin, end = i, ls - 1 - i",0
+1810,18,for k in range(ls - 2 * i - 1):,0
+1811,19,temp = matrix[end - k][begin],0
+1812,20,matrix[end - k][begin] = matrix[end][end - k],0
+1813,21,matrix[end][end - k] = matrix[begin + k][end],0
+1814,22,matrix[begin + k][end] = matrix[begin][begin + k],0
+1815,23,matrix[begin][begin + k] = temp,0
+1816,24,return,0
+1817,25,,0
+1818,26,if __name__ == '__main__':,0
+1819,28,s = Solution(),0
+1820,29,"s.rotate([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]])",0
+1821,30,,0
+1822,32,"
+",0
+1823,0,from inline import Here,0
+1824,1,,0
+1825,2,def _detect_nodejs() -> str:,0
+1826,3,nodejs_path = settings.nodejs_path(),0
+1827,4,"nodejs_paths = [nodejs_path] if nodejs_path is not None else [""nodejs"", ""node""]",0
+1828,5,,0
+1829,6,for nodejs_path in nodejs_paths:,0
+1830,7,try:,0
+1831,8,"proc = Popen([nodejs_path, ""--version""], stdout=PIPE, stderr=PIPE)",0
+1832,9,"(stdout, _) = proc.communicate()",0
+1833,10,except OSError:,0
+1834,11,continue,0
+1835,12,,0
+1836,13,if proc.returncode != 0:,0
+1837,14,continue,0
+1838,15,,0
+1839,16,"match = re.match(r""^v(\d+)\.(\d+)\.(\d+).*$"", stdout.decode(""utf-8""))",0
+1840,17,,1
+1841,21,,0
+1842,22,if match is not None:,0
+1843,23,version = tuple(int(v) for v in match.groups()),0
+1844,24,if version >= nodejs_min_version:,0
+1845,25,return nodejs_path,0
+1846,26,,0
+1847,28,"version_repr = ""."".join(str(x) for x in nodejs_min_version)",0
+1848,29,raise RuntimeError(,0
+1849,30,"f""node.js v{version_repr} or higher is needed to allow compilation of custom models """,0
+1850,32,"    )
+",0
+1851,0,import re,0
+1852,1,from inline import Here,0
+1853,2,,0
+1854,4,"_curly_re = re.compile(r""(.*?)\{(.+?)\}(.*)"")",0
+1855,5,,0
+1856,6,,0
+1857,7,"def text_to_sequence(text, cleaner_names):",0
+1858,8,"""""""Converts a string of text to a sequence of IDs corresponding to the symbols in the text.",0
+1859,9,,0
+1860,10,The text can optionally have ARPAbet sequences enclosed in curly braces embedded,0
+1861,11,"in it. For example, ""Turn left on {HH AW1 S S T AH0 N} Street.""",0
+1862,12,,0
+1863,13,Args:,0
+1864,14,text: string to convert to a sequence,0
+1865,15,cleaner_names: names of the cleaner functions to run the text through,0
+1866,16,,0
+1867,17,Returns:,0
+1868,18,List of integers corresponding to the symbols in the text,0
+1869,19,"""""""",0
+1870,20,sequence = [],0
+1871,21,,0
+1872,23,while len(text):,0
+1873,24,m = _curly_re.match(text),1
+1874,26,if not m:,0
+1875,27,"sequence += _symbols_to_sequence(_clean_text(text, cleaner_names))",0
+1876,28,break,0
+1877,29,"sequence += _symbols_to_sequence(_clean_text(m.group(1), cleaner_names))",0
+1878,30,sequence += _arpabet_to_sequence(m.group(2)),0
+1879,31,text = m.group(3),0
+1880,32,,0
+1881,35,"    return sequence
+",0
+1882,0,from inline import Here,0
+1883,1,,0
+1884,2,"def _login(self, webpage_url, display_id):",0
+1885,3,"username, password = self._get_login_info()",0
+1886,4,if username is None or password is None:,0
+1887,5,self.report_warning(,0
+1888,6,"""It looks like """,0
+1889,7,+ webpage_url,0
+1890,8,"+ "" requires a login. Try specifying a username and password and try again.""",0
+1891,9,),0
+1892,10,return None,0
+1893,11,,0
+1894,12,"mobj = re.match(r""(?P<root_url>https?://.*?/).*"", webpage_url)",1
+1895,14,"login_url = mobj.group(""root_url"") + ""api/login.php""",0
+1896,15,"logout_url = mobj.group(""root_url"") + ""logout""",0
+1897,16,,0
+1898,17,login_form = {,0
+1899,18,"""email"": username,",0
+1900,19,"""password"": password,",0
+1901,20,},0
+1902,21,,0
+1903,22,"request = sanitized_Request(login_url, urlencode_postdata(login_form))",0
+1904,23,"request.add_header(""Content-Type"", ""application/x-www-form-urlencoded"")",0
+1905,24,"self._download_webpage(request, display_id, ""Logging in"")",0
+1906,25,start_page = self._download_webpage(,0
+1907,26,"webpage_url, display_id, ""Getting authenticated video page""",0
+1908,27,),0
+1909,28,"self._download_webpage(logout_url, display_id, ""Logging out"")",0
+1910,30,"    return start_page
+",0
+1911,0,from inline import Here,0
+1912,1,,0
+1913,2,"def extract_contracts(self, method):",0
+1914,3,contracts = [],0
+1915,4,for line in method.__doc__.split('\n'):,0
+1916,5,line = line.strip(),0
+1917,6,,0
+1918,7,if line.startswith('@'):,0
+1919,8,,0
+1920,9,"name, args = re.match(r'@(\w+)\s*(.*)', line).groups()",1
+1921,11,"args = re.split(r'\s+', args)",1
+1922,13,"contracts.append(self.contracts[name](method, *args))",0
+1923,15,    return contracts,0
+1924,0,from inline import Here,0
+1925,1,,0
+1926,2,"def get_assignment_map_from_checkpoint(tvars, init_checkpoint):",0
+1927,3,"""""""Compute the union of the current variables and checkpoint variables.""""""",0
+1928,4,assignment_map = {},0
+1929,5,initialized_variable_names = {},0
+1930,6,,0
+1931,7,name_to_variable = collections.OrderedDict(),0
+1932,8,for var in tvars:,0
+1933,9,name = var.name,0
+1934,10,"m = re.match(""^(.*):\\d+$"", name)",1
+1935,12,if m is not None:,0
+1936,13,name = m.group(1),0
+1937,14,name_to_variable[name] = var,0
+1938,15,,0
+1939,16,init_vars = tf.train.list_variables(init_checkpoint),0
+1940,17,,0
+1941,18,assignment_map = collections.OrderedDict(),0
+1942,19,for x in init_vars:,0
+1943,20,"(name, var) = (x[0], x[1])",0
+1944,21,if name not in name_to_variable:,0
+1945,22,continue,0
+1946,23,assignment_map[name] = name,0
+1947,24,initialized_variable_names[name] = 1,0
+1948,25,"initialized_variable_names[name + "":0""] = 1",0
+1949,27,"  return (assignment_map, initialized_variable_names)",0
+1950,0,from inline import Here,0
+1951,1,,0
+1952,2,def get_model_filenames(model_dir):,0
+1953,3,files = os.listdir(model_dir),0
+1954,4,meta_files = [s for s in files if s.endswith('.meta')],0
+1955,5,if len(meta_files)==0:,0
+1956,6,raise ValueError('No meta file found in the model directory (%s)' % model_dir),0
+1957,7,elif len(meta_files)>1:,0
+1958,8,raise ValueError('There should not be more than one meta file in the model directory (%s)' % model_dir),0
+1959,9,meta_file = meta_files[0],0
+1960,10,ckpt = tf.train.get_checkpoint_state(model_dir),0
+1961,11,if ckpt and ckpt.model_checkpoint_path:,0
+1962,12,ckpt_file = os.path.basename(ckpt.model_checkpoint_path),0
+1963,13,"return meta_file, ckpt_file",0
+1964,14,,0
+1965,15,meta_files = [s for s in files if '.ckpt' in s],0
+1966,16,max_step = -1,0
+1967,17,for f in files:,0
+1968,18,"step_str = re.match(r'(^model-[\w\- ]+.ckpt-(\d+))', f)",1
+1969,20,if step_str is not None and len(step_str.groups())>=2:,0
+1970,21,step = int(step_str.groups()[1]),0
+1971,22,if step > max_step:,0
+1972,23,max_step = step,0
+1973,25,"    return meta_file, ckpt_file",0
+1974,0,from inline import Here,0
+1975,1,,0
+1976,2,@classmethod,0
+1977,3,"def _from_str(cls, text):",0
+1978,4,orig = text,0
+1979,5,"if text.startswith((""const "", ""volatile "")):",0
+1980,6,"typequal, _, text = text.partition("" "")",0
+1981,7,else:,0
+1982,8,typequal = None,0
+1983,9,,0
+1984,11,"m = re.match(r""^ *'?([a-zA-Z_]\w*(?:\s+[a-zA-Z_]\w*)*)\s*(.*?)'?\s*$"", text)",1
+1985,13,if not m:,0
+1986,14,"raise ValueError(f""invalid vartype text {orig!r}"")",0
+1987,15,"typespec, abstract = m.groups()",0
+1988,17,"    return cls(typequal, typespec, abstract or None)
+",0
+1989,0,from inline import Here,0
+1990,1,,0
+1991,2,def split_arguments(argstr):,0
+1992,3,arguments = [],0
+1993,4,current_argument = [],0
+1994,5,i = 0,0
+1995,6,,0
+1996,7,def finish_arg():,0
+1997,8,if current_argument:,0
+1998,9,"argstr = """".join(current_argument).strip()",0
+1999,10,"m = re.match(r""(.*(\s+|\*))(\w+)$"", argstr)",1
+2000,12,if m:,0
+2001,13,typename = m.group(1).strip(),0
+2002,14,name = m.group(3),0
+2003,15,else:,0
+2004,16,typename = argstr,0
+2005,17,"name = """"",0
+2006,18,"arguments.append((typename, name))",0
+2007,19,del current_argument[:],0
+2008,20,,0
+2009,21,while i < len(argstr):,0
+2010,22,c = argstr[i],0
+2011,23,"if c == "","":",0
+2012,24,finish_arg(),0
+2013,25,"elif c == ""("":",0
+2014,26,"p = skip_brackets(argstr[i:], ""("", "")"")",0
+2015,27,current_argument += argstr[i : i + p],0
+2016,28,i += p - 1,0
+2017,29,else:,0
+2018,30,current_argument += c,0
+2019,31,i += 1,0
+2020,33,"    return arguments
+",0
+2021,0,from inline import Here,0
+2022,1,,0
+2023,2,"def __init__(self, declaration: str, check_fail: bool = True):",0
+2024,3,self.check_fail = check_fail,0
+2025,4,"m = re.match(r""(.+?)\s+(glfw[A-Z][a-zA-Z0-9]+)[(](.+)[)]$"", declaration)",1
+2026,6,if m is None:,0
+2027,7,"raise SystemExit(""Failed to parse "" + repr(declaration))",0
+2028,8,self.restype = m.group(1).strip(),0
+2029,9,self.name = m.group(2),0
+2030,10,"args = m.group(3).strip().split("","")",0
+2031,11,args = [x.strip() for x in args],0
+2032,12,self.args = [],0
+2033,13,for a in args:,0
+2034,14,"if a == ""void"":",0
+2035,15,continue,0
+2036,16,self.args.append(Arg(a)),0
+2037,18,"        self.args = [Arg(""void v"")]
+",0
+2038,0,from inline import Here,0
+2039,1,,0
+2040,2,"def _merge_string_group(self, line, string_idx: int):",0
+2041,3,"""""""",0
+2042,4,Merges string group (i.e. set of adjacent strings) where the first,0
+2043,5,string in the group is `line.leaves[string_idx]`.,0
+2044,6,,0
+2045,7,Returns:,0
+2046,8,"Ok(new_line), if ALL of the validation checks found in",0
+2047,9,__validate_msg(...) pass.,0
+2048,10,OR,0
+2049,11,"Err(CannotTransform), otherwise.",0
+2050,12,"""""""",0
+2051,13,LL = line.leaves,0
+2052,14,,0
+2053,15,is_valid_index = is_valid_index_factory(LL),0
+2054,16,,0
+2055,17,"vresult = self._validate_msg(line, string_idx)",0
+2056,18,"if isinstance(vresult, Err):",0
+2057,19,return vresult,0
+2058,20,,0
+2059,23,atom_node = LL[string_idx].parent,0
+2060,24,,0
+2061,29,"BREAK_MARK = ""@@@@@ BLACK BREAKPOINT MARKER @@@@@""",0
+2062,30,,0
+2063,31,QUOTE = LL[string_idx].value[-1],0
+2064,32,,0
+2065,33,"def make_naked(string: str, string_prefix: str) -> str:",0
+2066,34,"""""""Strip @string (i.e. make it a ""naked"" string)",0
+2067,35,,0
+2068,36,Pre-conditions:,0
+2069,37,* assert_is_leaf_string(@string),0
+2070,38,,0
+2071,39,Returns:,0
+2072,40,A string that is identical to @string except that,0
+2073,41,"@string_prefix has been stripped, the surrounding QUOTE",0
+2074,42,"characters have been removed, and any remaining QUOTE",0
+2075,43,characters have been escaped.,0
+2076,44,"""""""",0
+2077,45,assert_is_leaf_string(string),0
+2078,46,,0
+2079,47,"RE_EVEN_BACKSLASHES = r""(?:(?<!\\)(?:\\\\)*)""",0
+2080,48,naked_string = string[len(string_prefix) + 1 : -1],0
+2081,49,naked_string = re.sub(,0
+2082,50,"""("" + RE_EVEN_BACKSLASHES + "")"" + QUOTE, r""\1\\"" + QUOTE, naked_string",0
+2083,51,),1
+2084,53,return naked_string,0
+2085,54,,0
+2086,57,custom_splits = [],0
+2087,58,,0
+2088,60,prefix_tracker = [],0
+2089,61,,0
+2090,64,next_str_idx = string_idx,0
+2091,65,"prefix = """"",0
+2092,66,while (,0
+2093,67,not prefix,0
+2094,68,and is_valid_index(next_str_idx),0
+2095,69,and LL[next_str_idx].type == token.STRING,0
+2096,70,):,0
+2097,71,prefix = get_string_prefix(LL[next_str_idx].value).lower(),0
+2098,72,next_str_idx += 1,0
+2099,73,,0
+2100,83,"S = """"",0
+2101,84,"NS = """"",0
+2102,85,num_of_strings = 0,0
+2103,86,next_str_idx = string_idx,0
+2104,87,while is_valid_index(next_str_idx) and LL[next_str_idx].type == token.STRING:,0
+2105,88,num_of_strings += 1,0
+2106,89,,0
+2107,90,SS = LL[next_str_idx].value,0
+2108,91,next_prefix = get_string_prefix(SS).lower(),0
+2109,92,,0
+2110,95,"if ""f"" in prefix and ""f"" not in next_prefix:",0
+2111,97,"SS = re.sub(r""(\{|\})"", r""\1\1"", SS)",0
+2112,98,,0
+2113,99,"NSS = make_naked(SS, next_prefix)",0
+2114,100,,0
+2115,101,has_prefix = bool(next_prefix),0
+2116,102,prefix_tracker.append(has_prefix),0
+2117,103,,0
+2118,104,S = prefix + QUOTE + NS + NSS + BREAK_MARK + QUOTE,0
+2119,105,"NS = make_naked(S, prefix)",0
+2120,106,,0
+2121,107,next_str_idx += 1,0
+2122,108,,0
+2123,109,"S_leaf = Leaf(token.STRING, S)",0
+2124,110,if self.normalize_strings:,0
+2125,111,S_leaf.value = normalize_string_quotes(S_leaf.value),0
+2126,112,,0
+2127,114,temp_string = S_leaf.value[len(prefix) + 1 : -1],0
+2128,115,for has_prefix in prefix_tracker:,0
+2129,116,mark_idx = temp_string.find(BREAK_MARK),0
+2130,117,assert (,0
+2131,118,mark_idx >= 0,0
+2132,119,"), ""Logic error while filling the custom string breakpoint cache.""",0
+2133,120,,0
+2134,121,temp_string = temp_string[mark_idx + len(BREAK_MARK) :],0
+2135,122,breakpoint_idx = mark_idx + (len(prefix) if has_prefix else 0) + 1,0
+2136,123,"custom_splits.append(CustomSplit(has_prefix, breakpoint_idx))",0
+2137,124,,0
+2138,125,"string_leaf = Leaf(token.STRING, S_leaf.value.replace(BREAK_MARK, """"))",0
+2139,126,,0
+2140,127,if atom_node is not None:,0
+2141,128,"replace_child(atom_node, string_leaf)",0
+2142,129,,0
+2143,131,new_line = line.clone(),0
+2144,132,"for (i, leaf) in enumerate(LL):",0
+2145,133,if i == string_idx:,0
+2146,134,new_line.append(string_leaf),0
+2147,135,,0
+2148,136,if string_idx <= i < string_idx + num_of_strings:,0
+2149,137,for comment_leaf in line.comments_after(LL[i]):,0
+2150,138,"new_line.append(comment_leaf, preformatted=True)",0
+2151,139,continue,0
+2152,140,,0
+2153,141,"append_leaves(new_line, line, [leaf])",0
+2154,142,,0
+2155,144,"    return Ok(new_line)
+",0
+2156,0,from inline import Here,0
+2157,1,,0
+2158,2,"def validate_case_matches_checkpoint(do_lower_case, init_checkpoint):",0
+2159,3,"""""""Checks whether the casing config is consistent with the checkpoint name.""""""",0
+2160,4,,0
+2161,9,,0
+2162,10,if not init_checkpoint:,0
+2163,11,return,0
+2164,12,,0
+2165,13,"m = re.match(""^.*?([A-Za-z0-9_-]+)/bert_model.ckpt"", init_checkpoint)",1
+2166,15,if m is None:,0
+2167,16,return,0
+2168,17,,0
+2169,18,model_name = m.group(1),0
+2170,19,,0
+2171,20,lower_models = [,0
+2172,21,"""uncased_L-24_H-1024_A-16"",",0
+2173,22,"""uncased_L-12_H-768_A-12"",",0
+2174,23,"""multilingual_L-12_H-768_A-12"",",0
+2175,24,"""chinese_L-12_H-768_A-12"",",0
+2176,25,],0
+2177,26,,0
+2178,27,cased_models = [,0
+2179,28,"""cased_L-12_H-768_A-12"",",0
+2180,29,"""cased_L-24_H-1024_A-16"",",0
+2181,30,"""multi_cased_L-12_H-768_A-12"",",0
+2182,31,],0
+2183,32,,0
+2184,33,is_bad_config = False,0
+2185,34,if model_name in lower_models and not do_lower_case:,0
+2186,35,is_bad_config = True,0
+2187,36,"actual_flag = ""False""",0
+2188,37,"case_name = ""lowercased""",0
+2189,38,"opposite_flag = ""True""",0
+2190,39,,0
+2191,40,if model_name in cased_models and do_lower_case:,0
+2192,41,is_bad_config = True,0
+2193,42,"actual_flag = ""True""",0
+2194,43,"case_name = ""cased""",0
+2195,44,"opposite_flag = ""False""",0
+2196,45,,0
+2197,46,if is_bad_config:,0
+2198,47,raise ValueError(,0
+2199,48,"""You passed in `--do_lower_case=%s` with `--init_checkpoint=%s`. """,0
+2200,49,"""However, `%s` seems to be a %s model, so you """,0
+2201,50,"""should pass in `--do_lower_case=%s` so that the fine-tuning matches """,0
+2202,51,"""how the model was pre-training. If this error is wrong, please """,0
+2203,52,"""just comment out this check.""",0
+2204,54,"        )
+",0
+2205,0,from inline import Here,0
+2206,1,,0
+2207,2,def get_device_facts(self):,0
+2208,3,device_facts = {},0
+2209,4,"device_facts[""devices""] = {}",0
+2210,5,d = {},0
+2211,6,"d[""host""] = """"",0
+2212,7,,0
+2213,9,"m = re.match(r"".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/"", sysdir)",1
+2214,11,if m and pcidata:,0
+2215,12,pciid = m.group(1),0
+2216,13,did = re.escape(pciid),0
+2217,14,"m = re.search(""^"" + did + r""\s(.*)$"", pcidata, re.MULTILINE)",0
+2218,15,if m:,0
+2219,16,"d[""host""] = m.group(1)",0
+2220,17,,0
+2221,18,"self.get_holders(d, sysdir)",0
+2222,19,,0
+2223,20,"device_facts[""devices""][diskname] = d",0
+2224,22,"    return device_facts
+",0
+2225,0,from inline import Here,0
+2226,1,,0
+2227,2,"def auto_augment_transform(config_str, hparams):",0
+2228,3,"""""""",0
+2229,4,Create a AutoAugment transform,0
+2230,5,,0
+2231,6,:param config_str: String defining configuration of auto augmentation. Consists of multiple sections separated by,0
+2232,7,"dashes ('-'). The first section defines the AutoAugment policy (one of 'v0', 'v0r', 'original', 'originalr').",0
+2233,8,"The remaining sections, not order sepecific determine",0
+2234,9,'mstd' -  float std deviation of magnitude noise applied,0
+2235,10,"Ex 'original-mstd0.5' results in AutoAugment with original policy, magnitude_std 0.5",0
+2236,11,,0
+2237,12,:param hparams: Other hparams (kwargs) for the AutoAugmentation scheme,0
+2238,13,,0
+2239,14,:return: A PyTorch compatible Transform,0
+2240,15,"""""""",0
+2241,16,config = config_str.split('-'),0
+2242,17,policy_name = config[0],0
+2243,18,config = config[1:],0
+2244,19,for c in config:,0
+2245,20,"cs = re.split(r'(\d.*)', c)",1
+2246,23,if len(cs) < 2:,0
+2247,24,continue,0
+2248,25,"key, val = cs[:2]",0
+2249,26,if key == 'mstd':,0
+2250,28,"hparams.setdefault('magnitude_std', float(val))",0
+2251,29,else:,0
+2252,30,"assert False, 'Unknown AutoAugment config section'",0
+2253,32,"    return AutoAugment(aa_policy)
+",0
+2254,0,from inline import Here,0
+2255,1,,0
+2256,2,def logit_deformatter(string):,0
+2257,3,"r""""""",0
+2258,4,Parser to convert string as r'$\mathdefault{1.41\cdot10^{-4}}$' in,0
+2259,5,"float 1.41e-4, as '0.5' or as r'$\mathdefault{\frac{1}{2}}$' in float",0
+2260,6,"0.5,",0
+2261,7,"""""""",0
+2262,8,match = re.match(,0
+2263,9,"r""[^\d]*""",0
+2264,10,"r""(?P<comp>1[-\N{Minus Sign}])?""",0
+2265,11,"r""(?P<mant>\d*\.?\d*)?""",0
+2266,12,"r""(?:\\cdot)?""",0
+2267,13,"r""(?:10\^\{(?P<expo>[-\N{Minus Sign}]?\d*)})?""",0
+2268,14,"r""[^\d]*$"",",0
+2269,15,"string,",0
+2270,16,),1
+2271,18,if match:,0
+2272,19,"comp = match[""comp""] is not None",0
+2273,20,"mantissa = float(match[""mant""]) if match[""mant""] else 1",0
+2274,21,expo = (,0
+2275,22,"int(match[""expo""].replace(""\N{Minus Sign}"", ""-""))",0
+2276,23,"if match[""expo""] is not None",0
+2277,24,else 0,0
+2278,25,),0
+2279,26,value = mantissa * 10**expo,0
+2280,27,"if match[""mant""] or match[""expo""] is not None:",0
+2281,28,if comp:,0
+2282,29,return 1 - value,0
+2283,30,return value,0
+2284,31,"match = re.match(r""[^\d]*\\frac\{(?P<num>\d+)\}\{(?P<deno>\d+)\}[^\d]*$"", string)",1
+2285,33,if match:,0
+2286,34,"num, deno = float(match[""num""]), float(match[""deno""])",0
+2287,36,"    raise ValueError(""Not formatted by LogitFormatter"")
+",0
+2288,0,from inline import Here,0
+2289,1,,0
+2290,2,"def get_package_details(self, package):",0
+2291,4,raw_pkg_details = {},0
+2292,5,last_detail = None,0
+2293,6,for line in package.splitlines():,0
+2294,7,"m = re.match(r""([\w ]*[\w]) +: (.*)"", line)",1
+2295,9,if m:,0
+2296,10,last_detail = m.group(1),0
+2297,11,raw_pkg_details[last_detail] = m.group(2),0
+2298,12,else:,0
+2299,14,raw_pkg_details[last_detail] = (,0
+2300,15,"raw_pkg_details[last_detail] + ""  "" + line.lstrip()",0
+2301,16,),0
+2302,17,,0
+2303,18,provides = None,0
+2304,19,"if raw_pkg_details[""Provides""] != ""None"":",0
+2305,20,"provides = [p.split(""="")[0] for p in raw_pkg_details[""Provides""].split(""  "")]",0
+2306,21,,0
+2307,22,return {,0
+2308,23,"""name"": raw_pkg_details[""Name""],",0
+2309,24,"""version"": raw_pkg_details[""Version""],",0
+2310,25,"""arch"": raw_pkg_details[""Architecture""],",0
+2311,27,"    }
+",0
+2312,0,from inline import Here,0
+2313,1,,0
+2314,2,"def _analyze_einsum_string(equation, bias_axes, input_shape, output_shape):",0
+2315,3,"""""""Analyzes an einsum string to determine the required weight shape.""""""",0
+2316,4,,0
+2317,5,"dot_replaced_string = re.sub(r""\.\.\."", ""0"", equation)",0
+2318,6,,0
+2319,8,"split_string = re.match(""([a-zA-Z]+),([a-zA-Z]+)->([a-zA-Z]+)"", dot_replaced_string)",1
+2320,10,if split_string:,0
+2321,11,"return _analyze_split_string(split_string, bias_axes, input_shape, output_shape)",0
+2322,12,,0
+2323,14,split_string = re.match(,0
+2324,15,"""0([a-zA-Z]+),([a-zA-Z]+)->0([a-zA-Z]+)"", dot_replaced_string",0
+2325,16,),0
+2326,17,if split_string:,0
+2327,18,return _analyze_split_string(,0
+2328,19,"split_string, bias_axes, input_shape, output_shape, left_elided=True",0
+2329,20,),0
+2330,21,,0
+2331,23,split_string = re.match(,0
+2332,24,"""([a-zA-Z]{2,})0,([a-zA-Z]+)->([a-zA-Z]+)0"", dot_replaced_string",0
+2333,25,),0
+2334,26,if split_string:,0
+2335,27,"return _analyze_split_string(split_string, bias_axes, input_shape, output_shape)",0
+2336,28,,0
+2337,29,raise ValueError(,0
+2338,30,"f""Invalid einsum equation '{equation}'. Equations must be in the form """,0
+2339,32,"    )
+",0
+2340,0,from inline import Here,0
+2341,1,,0
+2342,2,"def _tokenize(data: bytes, skip_ws: bool):",0
+2343,3,"""""""",0
+2344,4,A generator that produces _Token instances from Type-1 font code.,0
+2345,5,,0
+2346,6,The consumer of the generator may send an integer to the tokenizer to,0
+2347,7,indicate that the next token should be _BinaryToken of the given length.,0
+2348,8,,0
+2349,9,Parameters,0
+2350,10,----------,0
+2351,11,data : bytes,0
+2352,12,The data of the font to tokenize.,0
+2353,13,,0
+2354,14,skip_ws : bool,0
+2355,15,"If true, the generator will drop any _WhitespaceTokens from the output.",0
+2356,16,"""""""",0
+2357,17,"text = data.decode('ascii', 'replace')",0
+2358,18,whitespace_or_comment_re = re.compile(r'[\0\t\r\f\n ]+|%[^\r\n]*'),0
+2359,19,"token_re = re.compile(r'/{0,2}[^]\0\t\r\f\n ()<>{}/%[]+')",0
+2360,20,instring_re = re.compile(r'[()\\]'),0
+2361,21,hex_re = re.compile(r'^<[0-9a-fA-F\0\t\r\f\n ]*>$'),0
+2362,22,"oct_re = re.compile(r'[0-7]{1,3}')",0
+2363,23,pos = 0,0
+2364,24,next_binary = None,0
+2365,25,,0
+2366,26,while pos < len(text):,0
+2367,27,if next_binary is not None:,0
+2368,28,n = next_binary,0
+2369,29,"next_binary = (yield _BinaryToken(pos, data[pos:pos+n]))",0
+2370,30,pos += n,0
+2371,31,continue,0
+2372,32,"match = whitespace_or_comment_re.match(text, pos)",1
+2373,34,if match:,0
+2374,35,if not skip_ws:,0
+2375,36,"next_binary = (yield _WhitespaceToken(pos, match.group()))",0
+2376,37,pos = match.end(),0
+2377,38,elif text[pos] == '(':,0
+2378,44,start = pos,0
+2379,45,pos += 1,0
+2380,46,depth = 1,0
+2381,47,while depth:,0
+2382,48,"match = instring_re.search(text, pos)",0
+2383,49,if match is None:,0
+2384,50,raise ValueError(,0
+2385,51,f'Unterminated string starting at {start}'),0
+2386,52,pos = match.end(),0
+2387,53,if match.group() == '(':,0
+2388,54,depth += 1,0
+2389,55,elif match.group() == ')':,0
+2390,56,depth -= 1,0
+2391,57,else:  ,0
+2392,58,char = text[pos],0
+2393,59,if char in r'\()nrtbf':,0
+2394,60,pos += 1,0
+2395,61,else:,0
+2396,62,"octal = oct_re.match(text, pos)",0
+2397,63,if octal:,0
+2398,64,pos = octal.end(),0
+2399,65,else:,0
+2400,66,pass  ,0
+2401,67,"next_binary = (yield _StringToken(start, text[start:pos]))",0
+2402,68,"elif text[pos:pos + 2] in ('<<', '>>'):",0
+2403,69,"next_binary = (yield _DelimiterToken(pos, text[pos:pos + 2]))",0
+2404,70,pos += 2,0
+2405,71,elif text[pos] == '<':,0
+2406,72,start = pos,0
+2407,73,try:,0
+2408,74,"pos = text.index('>', pos) + 1",0
+2409,75,except ValueError as e:,0
+2410,76,raise ValueError(f'Unterminated hex string starting at {start}',0
+2411,77,) from e,0
+2412,78,if not hex_re.match(text[start:pos]):,0
+2413,79,raise ValueError(f'Malformed hex string starting at {start}'),0
+2414,80,"next_binary = (yield _StringToken(pos, text[start:pos]))",0
+2415,81,else:,0
+2416,82,"match = token_re.match(text, pos)",0
+2417,83,if match:,0
+2418,84,raw = match.group(),0
+2419,85,if raw.startswith('/'):,0
+2420,86,"next_binary = (yield _NameToken(pos, raw))",0
+2421,87,"elif match.group() in ('true', 'false'):",0
+2422,88,"next_binary = (yield _BooleanToken(pos, raw))",0
+2423,89,else:,0
+2424,90,try:,0
+2425,91,float(raw),0
+2426,92,"next_binary = (yield _NumberToken(pos, raw))",0
+2427,93,except ValueError:,0
+2428,94,"next_binary = (yield _KeywordToken(pos, raw))",0
+2429,95,pos = match.end(),0
+2430,96,else:,0
+2431,98,                pos += 1,0
+2432,0,,0
+2433,4,,0
+2434,5,import sys,0
+2435,6,import re,0
+2436,7,import random,0
+2437,8,from inline import Here,0
+2438,9,,0
+2439,11,,0
+2440,14,,0
+2441,16,input_list = sys.argv[1:],0
+2442,17,,0
+2443,18,for iter in range(10):,0
+2444,20,"id_num = """"",0
+2445,21,"poss_digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'E', 'I', 'O', 'U', 'X', 'Y']",0
+2446,22,for digit in range(6):,0
+2447,23,"id_num = id_num + str(poss_digits[random.randint(0, 16)])",0
+2448,24,print(id_num),0
+2449,25,,0
+2450,0,import re,0
+2451,1,from inline import Here,0
+2452,2,,0
+2453,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+2454,4,,0
+2455,6,"result = re.findall(r""[a-zA-Z]"", text)",0
+2456,7,"print(""Letters: "", result)",0
+2457,9,"result = re.findall(r""\d"", text)",0
+2458,10,"print(""Digits: "", result)",0
+2459,11,,0
+2460,13,"result = re.findall(r""\bs\w+"", text)",0
+2461,14,"print(""Words starting with 's': "", result)",0
+2462,15,,0
+2463,17,"result = re.findall(r""\w+e\b"", text)",0
+2464,18,"print(""Words ending with 'e': "", result)",0
+2465,19,,0
+2466,21,"result = re.findall(r""\b\w*o\w*\b"", text)",0
+2467,22,"print(""Words containing 'o': "", result)",0
+2468,23,,0
+2469,25,"result = re.findall(r""\b\w{4}\b"", text)",0
+2470,26,"print(""Words of length 4: "", result)",0
+2471,27,,0
+2472,29,"result = re.sub(r""\s"", ""-"", text)",0
+2473,30,"print(""Text with whitespaces replaced: "", result)",0
+2474,31,,0
+2475,33,"result = re.sub(r""is"", ""was"", text)",1
+2476,35,"print(""Text with 'is' replaced: "", result)",0
+2477,36,,0
+2478,39,"print(""Text split by whitespace: "", result)
+",0
+2479,0,import re,0
+2480,1,from inline import Here,0
+2481,2,,0
+2482,4,"text = ""This is filler text.""",0
+2483,5,"matches = re.findall(r'\b\w{3}\b' , text)",1
+2484,7,,0
+2485,9,"example_list_from_file = ['const button = (""",0
+2486,10,"'const icon = (""",0
+2487,11,"'const audio = (""audio"");']",0
+2488,12,str_output = [],0
+2489,13,for i in range(len(example_list_from_file)):,0
+2490,14,"str_output.append(re.sub(r'(?is)=.\(', '= document.querySelector(', example_list_from_file[i]))",0
+2491,15,,0
+2492,16,,0
+2493,18,pattern = '',0
+2494,19,matched = [],0
+2495,20,word_list = [],0
+2496,21,"matched = list(filter(re.compile(pattern).match, word_list))",0
+2497,22,,0
+2498,23,,0
+2499,24,,0
+2500,26,"find = re.search(pattern, text)",0
+2501,27,,0
+2502,28,,0
+2503,30,"result = re.split(pattern, text, 1)
+",0
+2504,0,import re,0
+2505,1,from inline import Here,0
+2506,2,,0
+2507,4,"text = ""This is filler text.""",0
+2508,5,"matches = re.findall(r'\b\w{3}\b' , text)",0
+2509,6,,0
+2510,7,,0
+2511,9,"example_list_from_file = ['const button = (""",0
+2512,10,"'const icon = (""",0
+2513,11,"'const audio = (""audio"");']",0
+2514,12,str_output = [],0
+2515,13,for i in range(len(example_list_from_file)):,0
+2516,14,"str_output.append(re.sub(r'(?is)=.\(', '= document.querySelector(', example_list_from_file[i]))",1
+2517,16,,0
+2518,18,pattern = '',0
+2519,19,matched = [],0
+2520,20,word_list = [],0
+2521,21,"matched = list(filter(re.compile(pattern).match, word_list))",0
+2522,22,,0
+2523,23,,0
+2524,24,,0
+2525,26,"find = re.search(pattern, text)",0
+2526,27,,0
+2527,28,,0
+2528,30,"result = re.split(pattern, text, 1)
+",0
+2529,0,import re,0
+2530,1,from inline import Here,0
+2531,2,,0
+2532,4,"text = ""This is filler text.""",0
+2533,5,"matches = re.findall(r'\b\w{3}\b' , text)",0
+2534,6,,0
+2535,7,,0
+2536,9,"example_list_from_file = ['const button = (""",0
+2537,10,"'const icon = (""",0
+2538,11,"'const audio = (""audio"");']",0
+2539,12,str_output = [],0
+2540,13,for i in range(len(example_list_from_file)):,0
+2541,14,"str_output.append(re.sub(r'(?is)=.\(', '= document.querySelector(', example_list_from_file[i]))",0
+2542,15,,0
+2543,16,,0
+2544,18,pattern = '',0
+2545,19,matched = [],0
+2546,20,word_list = [],0
+2547,21,"matched = list(filter(re.compile(pattern).match, word_list))",1
+2548,23,"['aback',",0
+2549,24,"'abase',",0
+2550,25,"'abate',",0
+2551,26,"'abbot',",0
+2552,27,"'abhor',",0
+2553,28,"'abide',",0
+2554,29,"'abled',",0
+2555,30,"'abuse',",0
+2556,31,"'above']).check_eq(matched, ['abase', 'abate', 'abide', 'abuse', 'above'])",0
+2557,32,,0
+2558,33,,0
+2559,35,"find = re.search(pattern, text)",0
+2560,36,,0
+2561,37,,0
+2562,39,"result = re.split(pattern, text, 1)
+",0
+2563,0,import re,0
+2564,1,from inline import Here,0
+2565,2,,0
+2566,4,"text = ""This is filler text.""",0
+2567,5,"matches = re.findall(r'\b\w{3}\b' , text)",0
+2568,6,,0
+2569,7,,0
+2570,9,"example_list_from_file = ['const button = (""",0
+2571,10,"'const icon = (""",0
+2572,11,"'const audio = (""audio"");']",0
+2573,12,str_output = [],0
+2574,13,for i in range(len(example_list_from_file)):,0
+2575,14,"str_output.append(re.sub(r'(?is)=.\(', '= document.querySelector(', example_list_from_file[i]))",0
+2576,15,,0
+2577,16,,0
+2578,18,pattern = '',0
+2579,19,matched = [],0
+2580,20,word_list = [],0
+2581,21,"matched = list(filter(re.compile(pattern).match, word_list))",0
+2582,22,,0
+2583,23,,0
+2584,24,,0
+2585,26,"find = re.search(pattern, text)",1
+2586,28,,0
+2587,30,"result = re.split(pattern, text, 1)
+",0
+2588,0,import re,0
+2589,1,from inline import Here,0
+2590,2,,0
+2591,4,"text = ""This is filler text.""",0
+2592,5,"matches = re.findall(r'\b\w{3}\b' , text)",0
+2593,6,,0
+2594,7,,0
+2595,9,"example_list_from_file = ['const button = (""",0
+2596,10,"'const icon = (""",0
+2597,11,"'const audio = (""audio"");']",0
+2598,12,str_output = [],0
+2599,13,for i in range(len(example_list_from_file)):,0
+2600,14,"str_output.append(re.sub(r'(?is)=.\(', '= document.querySelector(', example_list_from_file[i]))",0
+2601,15,,0
+2602,16,,0
+2603,18,pattern = '',0
+2604,19,matched = [],0
+2605,20,word_list = [],0
+2606,21,"matched = list(filter(re.compile(pattern).match, word_list))",0
+2607,22,,0
+2608,23,,0
+2609,24,,0
+2610,26,"find = re.search(pattern, text)",0
+2611,27,,0
+2612,28,,0
+2613,0,,0
+2614,4,,0
+2615,5,import sys,0
+2616,6,import re,0
+2617,7,import random,0
+2618,8,from inline import Here,0
+2619,9,,0
+2620,11,,0
+2621,13,,0
+2622,15,input_list = sys.argv[1:],0
+2623,16,,0
+2624,17,"hex_dig = [""0"", ""1"", ""2"", ""3"", ""4"", ""5"", ""6"", ""7"", ""8"", ""9"",",0
+2625,18,"""a"", ""b"", ""c"", ""d"", ""e"", ""f"", ""g"", ""h"", ""i"", ""j"",",0
+2626,19,"""k"", ""l""]",0
+2627,20,for iter in range(10):,0
+2628,21,,0
+2629,23,"left_bit = hex_dig[random.randint(0, 21)]",0
+2630,24,"right_bit = hex_dig[random.randint(0, 21)]",0
+2631,25,hex_str = left_bit + right_bit,0
+2632,26,"print(hex_str + "":"")",0
+2633,27,,0
+2634,29,ans = True,0
+2635,30,try:,0
+2636,31,"num = int(left_bit + right_bit, 16)",0
+2637,32,except:,0
+2638,33,ans = False,0
+2639,34,,0
+2640,0,,0
+2641,4,,0
+2642,5,import sys,0
+2643,6,import re,0
+2644,7,import random,0
+2645,8,from inline import Here,0
+2646,9,,0
+2647,11,,0
+2648,13,,0
+2649,15,input_list = sys.argv[1:],0
+2650,16,,0
+2651,17,for iter in range(10):,0
+2652,18,"word = """"",0
+2653,19,"ans = """"",0
+2654,20,for n in range(5):,0
+2655,22,"ch = chr(97 + random.randint(0, 14))",0
+2656,23,word += ch,0
+2657,24,,0
+2658,26,"if(not(ch in ('a', 'e', 'i', 'o', 'u'))):",0
+2659,27,ans += ch,0
+2660,28,,0
+2661,29,"print(""remove_vowels(\"""" + word + ""\""):"")",0
+2662,30,"print(re.sub(""[aeiou]"", """", word) + ""\n"")",0
+2663,31,,0
+2664,0,import re,0
+2665,1,from inline import Here,0
+2666,2,,0
+2667,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+2668,4,,0
+2669,6,"result = re.findall(r""[a-zA-Z]"", text)",1
+2670,8,"print(""Letters: "", result)",0
+2671,10,"result = re.findall(r""\d"", text)",0
+2672,11,"print(""Digits: "", result)",0
+2673,12,,0
+2674,14,"result = re.findall(r""\bs\w+"", text)",0
+2675,15,"print(""Words starting with 's': "", result)",0
+2676,16,,0
+2677,18,"result = re.findall(r""\w+e\b"", text)",0
+2678,19,"print(""Words ending with 'e': "", result)",0
+2679,20,,0
+2680,22,"result = re.findall(r""\b\w*o\w*\b"", text)",0
+2681,23,"print(""Words containing 'o': "", result)",0
+2682,24,,0
+2683,26,"result = re.findall(r""\b\w{4}\b"", text)",0
+2684,27,"print(""Words of length 4: "", result)",0
+2685,28,,0
+2686,30,"result = re.sub(r""\s"", ""-"", text)",0
+2687,31,"print(""Text with whitespaces replaced: "", result)",0
+2688,32,,0
+2689,34,"result = re.sub(r""is"", ""was"", text)",0
+2690,35,"print(""Text with 'is' replaced: "", result)",0
+2691,36,,0
+2692,39,"print(""Text split by whitespace: "", result)
+",0
+2693,0,,0
+2694,4,,0
+2695,5,import sys,0
+2696,6,import re,0
+2697,7,from inline import Here,0
+2698,8,,0
+2699,10,,0
+2700,12,,0
+2701,14,input_list = sys.argv[1:],0
+2702,15,,0
+2703,16,"words = [""   hello"", "" world "", ""hi       i"", ""waddup"", "" hello world""]",0
+2704,17,,0
+2705,18,for iter in range(len(words)):,0
+2706,19,"print(""'"" + re.sub(""^ *| *$"","""",words[iter]) + ""'"")",0
+2707,0,import re,0
+2708,1,from inline import Here,0
+2709,2,,0
+2710,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+2711,4,,0
+2712,6,"result = re.findall(r""[a-zA-Z]"", text)",0
+2713,7,"print(""Letters: "", result)",0
+2714,9,"result = re.findall(r""\d"", text)",1
+2715,11,"print(""Digits: "", result)",0
+2716,12,,0
+2717,14,"result = re.findall(r""\bs\w+"", text)",0
+2718,15,"print(""Words starting with 's': "", result)",0
+2719,16,,0
+2720,18,"result = re.findall(r""\w+e\b"", text)",0
+2721,19,"print(""Words ending with 'e': "", result)",0
+2722,20,,0
+2723,22,"result = re.findall(r""\b\w*o\w*\b"", text)",0
+2724,23,"print(""Words containing 'o': "", result)",0
+2725,24,,0
+2726,26,"result = re.findall(r""\b\w{4}\b"", text)",0
+2727,27,"print(""Words of length 4: "", result)",0
+2728,28,,0
+2729,30,"result = re.sub(r""\s"", ""-"", text)",0
+2730,31,"print(""Text with whitespaces replaced: "", result)",0
+2731,32,,0
+2732,34,"result = re.sub(r""is"", ""was"", text)",0
+2733,35,"print(""Text with 'is' replaced: "", result)",0
+2734,36,,0
+2735,39,"print(""Text split by whitespace: "", result)
+",0
+2736,0,import re,0
+2737,1,from inline import Here,0
+2738,2,,0
+2739,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+2740,4,,0
+2741,6,"result = re.findall(r""[a-zA-Z]"", text)",0
+2742,7,"print(""Letters: "", result)",0
+2743,9,"result = re.findall(r""\d"", text)",0
+2744,10,"print(""Digits: "", result)",0
+2745,11,,0
+2746,13,"result = re.findall(r""\bs\w+"", text)",0
+2747,14,"print(""Words starting with 's': "", result)",0
+2748,15,,0
+2749,17,"result = re.findall(r""\w+e\b"", text)",0
+2750,18,"print(""Words ending with 'e': "", result)",0
+2751,19,,0
+2752,21,"result = re.findall(r""\b\w*o\w*\b"", text)",1
+2753,23,"print(""Words containing 'o': "", result)",0
+2754,24,,0
+2755,26,"result = re.findall(r""\b\w{4}\b"", text)",0
+2756,27,"print(""Words of length 4: "", result)",0
+2757,28,,0
+2758,30,"result = re.sub(r""\s"", ""-"", text)",0
+2759,31,"print(""Text with whitespaces replaced: "", result)",0
+2760,32,,0
+2761,34,"result = re.sub(r""is"", ""was"", text)",0
+2762,35,"print(""Text with 'is' replaced: "", result)",0
+2763,36,,0
+2764,39,"print(""Text split by whitespace: "", result)
+",0
+2765,0,import re,0
+2766,1,from inline import Here,0
+2767,2,,0
+2768,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+2769,4,,0
+2770,6,"result = re.findall(r""[a-zA-Z]"", text)",0
+2771,7,"print(""Letters: "", result)",0
+2772,9,"result = re.findall(r""\d"", text)",0
+2773,10,"print(""Digits: "", result)",0
+2774,11,,0
+2775,13,"result = re.findall(r""\bs\w+"", text)",0
+2776,14,"print(""Words starting with 's': "", result)",0
+2777,15,,0
+2778,17,"result = re.findall(r""\w+e\b"", text)",0
+2779,18,"print(""Words ending with 'e': "", result)",0
+2780,19,,0
+2781,21,"result = re.findall(r""\b\w*o\w*\b"", text)",0
+2782,22,"print(""Words containing 'o': "", result)",0
+2783,23,,0
+2784,25,"result = re.findall(r""\b\w{4}\b"", text)",1
+2785,27,"print(""Words of length 4: "", result)",0
+2786,28,,0
+2787,30,"result = re.sub(r""\s"", ""-"", text)",0
+2788,31,"print(""Text with whitespaces replaced: "", result)",0
+2789,32,,0
+2790,34,"result = re.sub(r""is"", ""was"", text)",0
+2791,35,"print(""Text with 'is' replaced: "", result)",0
+2792,36,,0
+2793,39,"print(""Text split by whitespace: "", result)
+",0
+2794,0,,0
+2795,4,,0
+2796,5,import sys,0
+2797,6,import re,0
+2798,7,from inline import Here,0
+2799,8,,0
+2800,10,,0
+2801,12,,0
+2802,14,input_list = sys.argv[1:],0
+2803,15,,0
+2804,17,def uppcase(match):,0
+2805,18,arr = match.span(),0
+2806,19,return match.group(1).upper() + match.string[arr[0]+2:arr[1]],0
+2807,20,,0
+2808,22,"titles = [""not the same anymore"", ""ode To the Mets"", ""Why Are Sundays So Depressing"",",0
+2809,23,"""brooklyn bridge"", ""Eternal summer"", ""the adults are talking"", ""selfless"",",0
+2810,24,"""at the Door"", ""bad decisions""]",0
+2811,25,,0
+2812,26,for iter in range(len(titles)):,0
+2813,28,"print(re.sub(r'( [a-z])[a-z]*', uppcase, "" ""+titles[iter]).strip())",0
+2814,29,,0
+2815,0,from inline import Here,0
+2816,1,,0
+2817,2,"def git_versions_from_keywords(keywords, tag_prefix, verbose):",0
+2818,3,"""""""Get version information from git keywords.""""""",0
+2819,4,if not keywords:,0
+2820,5,"raise NotThisMethod(""no keywords at all, weird"")",0
+2821,6,"date = keywords.get(""date"")",0
+2822,7,if date is not None:,0
+2823,10,,0
+2824,17,"date = date.strip().replace("" "", ""T"", 1).replace("" "", """", 1)",0
+2825,18,"Here(""21"").given(date, ""2020-07-10 15:00:00.000"").check_eq(date, ""2020-07-10T15:00:00.000"")",0
+2826,19,"refnames = keywords[""refnames""].strip()",0
+2827,20,"if refnames.startswith(""$Format""):",0
+2828,21,if verbose:,0
+2829,22,"print(""keywords are unexpanded, not using"")",0
+2830,23,"raise NotThisMethod(""unexpanded keywords, not a git-archive tarball"")",0
+2831,24,"refs = set([r.strip() for r in refnames.strip(""()"").split("","")])",0
+2832,27,"TAG = ""tag: """,0
+2833,28,tags = set([r[len(TAG) :] for r in refs if r.startswith(TAG)]),0
+2834,29,"Here(""32"").given(refs, [""tag: foo-1.0"", ""tag: bar-3.2""]).given(TAG, ""tag: "").check_eq(tags, {""foo-1.0"", ""bar-3.2""})",0
+2835,30,"Here(""33"").given(refs, [""foo-1.0"", ""bar-3.2""]).given(TAG, ""tag: "").check_eq(tags, set())",0
+2836,31,if not tags:,0
+2837,39,"tags = set([r for r in refs if re.search(r""\d"", r)])",0
+2838,40,"Here(""43"").given(refs, [""foo-1.0"", ""bar-3.2"", ""release"", ""stabilization"", ""master""]).check_eq(tags, {""foo-1.0"", ""bar-3.2""})",0
+2839,41,if verbose:,0
+2840,42,"print(""discarding '%s', no digits"" % "","".join(refs - tags))",0
+2841,43,if verbose:,0
+2842,44,"print(""likely tags: %s"" % "","".join(sorted(tags)))",0
+2843,45,for ref in sorted(tags):,0
+2844,47,if ref.startswith(tag_prefix):,0
+2845,48,r = ref[len(tag_prefix) :],0
+2846,49,if verbose:,0
+2847,50,"print(""picking %s"" % r)",0
+2848,51,return {,0
+2849,52,"""version"": r,",0
+2850,53,"""full-revisionid"": keywords[""full""].strip(),",0
+2851,54,"""dirty"": False,",0
+2852,55,"""error"": None,",0
+2853,56,"""date"": date,",0
+2854,57,},0
+2855,59,if verbose:,0
+2856,60,"print(""no suitable tags, using unknown + full revision id"")",0
+2857,61,return {,0
+2858,62,"""version"": ""0+unknown"",",0
+2859,63,"""full-revisionid"": keywords[""full""].strip(),",0
+2860,64,"""dirty"": False,",0
+2861,65,"""error"": ""no suitable tags"",",0
+2862,67,"    }
+",0
+2863,0,from inline import Here,0
+2864,1,,0
+2865,2,def _parse_query(query):,0
+2866,3,topic = query,0
+2867,4,keyword = None,0
+2868,5,"search_options = """"",0
+2869,6,,0
+2870,7,keyword = None,0
+2871,8,"if ""~"" in query:",0
+2872,9,topic = query,0
+2873,10,"pos = topic.index(""~"")",0
+2874,11,keyword = topic[pos + 1 :],0
+2875,12,topic = topic[:pos],0
+2876,13,,0
+2877,14,"if ""/"" in keyword:",0
+2878,15,search_options = keyword[::-1],1
+2879,17,"search_options = search_options[: search_options.index(""/"")]",1
+2880,19,keyword = keyword[: -len(search_options) - 1],1
+2881,22,"    return topic, keyword, search_options
+",0
+2882,0,from inline import Here,0
+2883,1,,0
+2884,2,"def remove_markup(text, promote_remaining=True, simplify_links=True):",0
+2885,3,"""""""Filter out wiki markup from `text`, leaving only text.",0
+2886,4,,0
+2887,5,Parameters,0
+2888,6,----------,0
+2889,7,text : str,0
+2890,8,String containing markup.,0
+2891,9,promote_remaining : bool,0
+2892,10,Whether uncaught markup should be promoted to plain text.,0
+2893,11,simplify_links : bool,0
+2894,12,Whether links should be simplified keeping only their description text.,0
+2895,13,,0
+2896,14,Returns,0
+2897,15,-------,0
+2898,16,str,0
+2899,17,`text` without markup.,0
+2900,18,,0
+2901,19,"""""""",0
+2902,20,"text = re.sub(RE_P2, '', text)  ",1
+2903,26,text = remove_template(text),0
+2904,27,text = remove_file(text),0
+2905,28,iters = 0,0
+2906,29,while True:,0
+2907,30,"old, iters = text, iters + 1",0
+2908,31,"text = re.sub(RE_P0, '', text)  ",1
+2909,33,"text = re.sub(RE_P1, '', text)  ",0
+2910,34,"text = re.sub(RE_P9, '', text)  ",0
+2911,35,"text = re.sub(RE_P10, '', text)  ",0
+2912,36,"text = re.sub(RE_P11, '', text)  ",0
+2913,37,"text = re.sub(RE_P14, '', text)  ",0
+2914,38,"text = re.sub(RE_P5, '\\3', text)  ",0
+2915,39,,0
+2916,40,if simplify_links:,0
+2917,41,"text = re.sub(RE_P6, '\\2', text)  ",0
+2918,43,"text = text.replace(""!!"", ""\n|"")  ",0
+2919,44,"text = text.replace(""|-||"", ""\n|"")  ",0
+2920,45,"text = re.sub(RE_P12, '\n', text)  ",0
+2921,46,"text = text.replace('|||', '|\n|')  ",0
+2922,47,"text = text.replace('||', '\n|')  ",0
+2923,48,"text = re.sub(RE_P13, '\n', text)  ",0
+2924,49,"text = re.sub(RE_P17, '\n', text)  ",0
+2925,50,,0
+2926,52,"text = text.replace('[]', '')",0
+2927,54,if old == text or iters > 2:,0
+2928,55,break,0
+2929,56,,0
+2930,57,if promote_remaining:,0
+2931,58,"text = text.replace('[', '').replace(']', '')  ",0
+2932,60,    return text,0
+2933,0,import re,0
+2934,1,from inline import Here,0
+2935,2,,0
+2936,5,"m_import = re.compile(""^[ \t]*from[ \t]+([^ \t]+)[ \t]+"")",0
+2937,6,"m_from = re.compile(""^[ \t]*import[ \t]+([^",0
+2938,7,,0
+2939,8,,0
+2940,11,"def process(filename, table):",0
+2941,12,"with open(filename, encoding=""utf-8"") as fp:",0
+2942,13,mod = os.path.basename(filename),0
+2943,14,"if mod[-3:] == "".py"":",0
+2944,15,mod = mod[:-3],1
+2945,17,table[mod] = list = [],0
+2946,18,while 1:,0
+2947,19,line = fp.readline(),0
+2948,20,if not line:,0
+2949,21,break,0
+2950,22,"while line[-1:] == ""\\"":",0
+2951,23,nextline = fp.readline(),0
+2952,24,if not nextline:,0
+2953,25,break,0
+2954,26,line = line[:-1] + nextline,0
+2955,27,m_found = m_import.match(line) or m_from.match(line),0
+2956,28,if m_found:,0
+2957,29,"(a, b), (a1, b1) = m_found.regs[:2]",0
+2958,30,else:,0
+2959,31,continue,0
+2960,32,"words = line[a1:b1].split("","")",1
+2961,34,,0
+2962,35,,0
+2963,36,for word in words:,0
+2964,37,word = word.strip(),0
+2965,38,,0
+2966,40,"                    list.append(word)
+",0
+2967,0,from inline import Here,0
+2968,1,,0
+2969,2,def load_tokens(path):,0
+2970,3,tok_names = [],0
+2971,4,string_to_tok = {},0
+2972,5,ERRORTOKEN = None,0
+2973,6,with open(path) as fp:,0
+2974,7,for line in fp:,0
+2975,8,line = line.strip(),0
+2976,10,"i = line.find(""",1
+2977,12,if i >= 0:,0
+2978,13,line = line[:i].strip(),1
+2979,15,if not line:,0
+2980,16,continue,0
+2981,17,fields = line.split(),0
+2982,18,name = fields[0],0
+2983,19,value = len(tok_names),0
+2984,20,"if name == ""ERRORTOKEN"":",0
+2985,21,ERRORTOKEN = value,0
+2986,22,string = fields[1] if len(fields) > 1 else None,0
+2987,23,if string:,0
+2988,24,string = eval(string),0
+2989,25,string_to_tok[string] = value,0
+2990,27,"    return tok_names, ERRORTOKEN, string_to_tok
+",0
+2991,0,import sys,0
+2992,1,import requests,0
+2993,2,import json,0
+2994,3,from collections import OrderedDict,0
+2995,4,from inline import Here,0
+2996,5,,0
+2997,6,def __main__():,0
+2998,8,"CS_BASE_URL = ""https://cheatsheetseries.owasp.org/cheatsheets/%s.html""",0
+2999,9,,0
+3000,11,response = requests.get(,0
+3001,12,"""https://raw.githubusercontent.com/OWASP/CheatSheetSeries/master/Index.md""",0
+3002,13,),0
+3003,14,if response.status_code != 200:,0
+3004,15,"print(""Cannot load the INDEX content: HTTP %s received!"" % response.status_code)",0
+3005,16,sys.exit(1),0
+3006,17,else:,0
+3007,18,data = OrderedDict({}),0
+3008,19,"for line in response.text.split(""\n""):",0
+3009,20,"if ""(assets/Index_"" in line:",0
+3010,21,work = line.strip(),0
+3011,23,"cs_name = work[1 : work.index(""]"")]",1
+3012,26,"technologies = work.split(""!"")[1:]",1
+3013,28,for technology in technologies:,0
+3014,29,"technology_name = technology[1 : technology.index(""]"")].upper()",1
+3015,31,if technology_name not in data:,0
+3016,32,data[technology_name] = [],0
+3017,33,data[technology_name].append(,0
+3018,34,{,0
+3019,35,"""CS_NAME"": cs_name,",0
+3020,36,"""CS_URL"": CS_BASE_URL % cs_name.replace("" "", ""_""),",0
+3021,37,},0
+3022,38,),0
+3023,41,"        sys.exit(0)
+",0
+3024,0,"from typing import Any, Dict",0
+3025,1,from inline import Here,0
+3026,2,,0
+3027,3,"def __call__(self, line: str, ans: Dict[str, Any]) -> None:",0
+3028,4,is_block = line.startswith(',1
+3029,7,if self.in_metadata and not is_block:,0
+3030,8,self.keep_going = False,0
+3031,9,return,0
+3032,10,if not self.in_metadata and is_block:,0
+3033,11,self.in_metadata = True,0
+3034,12,if not self.in_metadata:,0
+3035,13,return,0
+3036,14,line = line[3:],0
+3037,15,if self.in_blurb:,0
+3038,16,ans['blurb'] += ' ' + line,0
+3039,17,return,0
+3040,18,try:,0
+3041,19,"key, val = line.split(':', 1)",1
+3042,21,except Exception:,0
+3043,22,self.keep_going = False,0
+3044,23,return,0
+3045,24,key = key.strip().lower(),0
+3046,25,val = val.strip(),0
+3047,26,if val:,0
+3048,27,ans[key] = val,0
+3049,29,"        self.in_blurb = True
+",0
+3050,0,from inline import Here,0
+3051,1,,0
+3052,2,"def _split(self, data):",0
+3053,3,"""""""",0
+3054,4,Split the Type 1 font into its three main parts.,0
+3055,5,,0
+3056,6,"The three parts are: (1) the cleartext part, which ends in a",0
+3057,7,"eexec operator; (2) the encrypted part; (3) the fixed part,",0
+3058,8,which contains 512 ASCII zeros possibly divided on various,0
+3059,9,"lines, a cleartomark operator, and possibly something else.",0
+3060,10,"""""""",0
+3061,11,,0
+3062,13,,0
+3063,14,"idx = data.index(b""eexec"")",1
+3064,16,"idx += len(b""eexec"")",1
+3065,18,"while data[idx] in b"" \t\r\n"":",0
+3066,19,idx += 1,0
+3067,20,len1 = idx,0
+3068,21,,0
+3069,24,"idx = data.rindex(b""cleartomark"") - 1",1
+3070,26,zeros = 512,0
+3071,27,"while zeros and data[idx] in b""0"" or data[idx] in b""\r\n"":",0
+3072,28,"if data[idx] in b""0"":",0
+3073,29,zeros -= 1,0
+3074,30,idx -= 1,0
+3075,32,if zeros:,0
+3076,35,"_log.info(""Insufficiently many zeros in Type 1 font"")",0
+3077,36,,0
+3078,41,idx1 = len1 + ((idx - len1 + 2) & ~1)  ,0
+3079,42,binary = binascii.unhexlify(data[len1:idx1]),0
+3080,44,"    return data[:len1], binary, data[idx + 1 :]
+",0
+3081,0,from inline import Here,0
+3082,1,,0
+3083,2,"def trim_zeros(filt, trim=""fb""):",0
+3084,3,"""""""",0
+3085,4,Trim the leading and/or trailing zeros from a 1-D array or sequence.,0
+3086,5,,0
+3087,6,Parameters,0
+3088,7,----------,0
+3089,8,filt : 1-D array or sequence,0
+3090,9,Input array.,0
+3091,10,"trim : str, optional",0
+3092,11,A string with 'f' representing trim from front and 'b' to trim from,0
+3093,12,"back. Default is 'fb', trim zeros from both front and back of the",0
+3094,13,array.,0
+3095,14,,0
+3096,15,Returns,0
+3097,16,-------,0
+3098,17,trimmed : 1-D array or sequence,0
+3099,18,The result of trimming the input. The input data type is preserved.,0
+3100,19,,0
+3101,20,Examples,0
+3102,21,--------,0
+3103,22,">>> a = np.array((0, 0, 0, 1, 2, 3, 0, 2, 1, 0))",0
+3104,23,>>> np.trim_zeros(a),0
+3105,24,"array([1, 2, 3, 0, 2, 1])",0
+3106,25,,0
+3107,26,">>> np.trim_zeros(a, 'b')",0
+3108,27,"array([0, 0, 0, ..., 0, 2, 1])",0
+3109,28,,0
+3110,29,"The input data type is preserved, list/tuple in means list/tuple out.",0
+3111,30,,0
+3112,31,">>> np.trim_zeros([0, 1, 2, 0])",0
+3113,32,"[1, 2]",0
+3114,33,,0
+3115,34,"""""""",0
+3116,35,first = 0,0
+3117,36,trim = trim.upper(),1
+3118,38,,0
+3119,39,"if ""F"" in trim:",0
+3120,40,for i in filt:,0
+3121,41,if i != 0.0:,0
+3122,42,break,0
+3123,43,else:,0
+3124,44,first = first + 1,0
+3125,45,last = len(filt),0
+3126,47,"if ""B"" in trim:",0
+3127,48,for i in filt[::-1]:,0
+3128,49,if i != 0.0:,0
+3129,50,break,0
+3130,51,else:,0
+3131,53,    return filt[first:last],0
+3132,0,from inline import Here,0
+3133,1,,0
+3134,2,def get_authors(revision_range):,0
+3135,3,"pat = ""^.*\\t(.*)$""",0
+3136,4,"lst_release, cur_release = (r.strip() for r in revision_range.split(""..""))",1
+3137,6,,0
+3138,7,"if ""|"" in cur_release:",0
+3139,9,"maybe_tag, head = cur_release.split(""|"")",1
+3140,11,"assert head == ""HEAD""",0
+3141,12,if maybe_tag in this_repo.tags:,0
+3142,13,cur_release = maybe_tag,0
+3143,14,else:,0
+3144,15,cur_release = head,0
+3145,16,"revision_range = f""{lst_release}..{cur_release}""",0
+3146,17,,0
+3147,22,"xpr = re.compile(r""Co-authored-by: (?P<name>[^<]+) "")",0
+3148,23,cur = set(,0
+3149,24,xpr.findall(,0
+3150,25,"this_repo.git.log(""--grep=Co-authored"", ""--pretty=%b"", revision_range)",0
+3151,26,),0
+3152,27,),0
+3153,28,"cur |= set(re.findall(pat, this_repo.git.shortlog(""-s"", revision_range), re.M))",0
+3154,29,,0
+3155,30,pre = set(,0
+3156,31,"xpr.findall(this_repo.git.log(""--grep=Co-authored"", ""--pretty=%b"", lst_release))",0
+3157,32,),0
+3158,33,"pre |= set(re.findall(pat, this_repo.git.shortlog(""-s"", lst_release), re.M))",0
+3159,34,,0
+3160,36,"cur.discard(""Homu"")",0
+3161,37,"pre.discard(""Homu"")",0
+3162,38,,0
+3163,40,"authors = [s + "" +"" for s in cur - pre] + [s for s in cur & pre]",0
+3164,42,"    return authors
+",0
+3165,0,from inline import Here,0
+3166,1,,0
+3167,2,"LABELS_FILENAME = ""labels.txt""",0
+3168,3,,0
+3169,4,"def read_label_file(dataset_dir, filename=LABELS_FILENAME):",0
+3170,5,"""""""Reads the labels file and returns a mapping from ID to class name.",0
+3171,6,,0
+3172,7,Args:,0
+3173,8,dataset_dir: The directory in which the labels file is found.,0
+3174,9,filename: The filename where the class names are written.,0
+3175,10,,0
+3176,11,Returns:,0
+3177,12,A map from a label (integer) to class name.,0
+3178,13,"""""""",0
+3179,14,"labels_filename = os.path.join(dataset_dir, filename)",0
+3180,15,"with tf.gfile.Open(labels_filename, ""rb"") as f:",0
+3181,16,lines = f.read().decode(),0
+3182,17,"lines = lines.split(""\n"")",0
+3183,18,"lines = filter(None, lines)",0
+3184,19,,0
+3185,20,labels_to_class_names = {},0
+3186,21,for line in lines:,0
+3187,22,"index = line.index("":"")",0
+3188,23,labels_to_class_names[int(line[:index])] = line[index + 1 :],1
+3189,25,"    return labels_to_class_names
+",0
+3190,0,from inline import Here,0
+3191,1,,0
+3192,2,def expand_hostname_range(line=None):,0
+3193,3,''',0
+3194,4,A helper function that expands a given line that contains a pattern,0
+3195,5,"specified in top docstring, and returns a list that consists of the",0
+3196,6,expanded version.,0
+3197,7,,0
+3198,8,The '[' and ']' characters are used to maintain the pseudo-code,0
+3199,9,appearance. They are replaced in this function with '|' to ease,0
+3200,10,string splitting.,0
+3201,11,,0
+3202,12,References: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html,0
+3203,13,''',0
+3204,14,all_hosts = [],0
+3205,15,if line:,0
+3206,21,,0
+3207,28,,0
+3208,29,"(head, nrange, tail) = line.replace('[', '|', 1).replace(']', '|', 1).split('|')",1
+3209,31,"bounds = nrange.split("":"")",1
+3210,33,if len(bounds) != 2 and len(bounds) != 3:,0
+3211,34,"raise AnsibleError(""host range must be begin:end or begin:end:step"")",0
+3212,35,beg = bounds[0],0
+3213,36,end = bounds[1],0
+3214,37,if len(bounds) == 2:,0
+3215,38,step = 1,0
+3216,39,else:,0
+3217,40,step = bounds[2],0
+3218,41,if not beg:,0
+3219,42,"beg = ""0""",0
+3220,43,if not end:,0
+3221,44,"raise AnsibleError(""host range must specify end value"")",0
+3222,45,if beg[0] == '0' and len(beg) > 1:,0
+3223,46,rlen = len(beg)  ,0
+3224,47,if rlen != len(end):,0
+3225,48,"raise AnsibleError(""host range must specify equal-length begin and end formats"")",0
+3226,49,,0
+3227,50,def fill(x):,0
+3228,51,return str(x).zfill(rlen)  ,0
+3229,52,,0
+3230,53,else:,0
+3231,54,fill = str,0
+3232,55,,0
+3233,56,try:,0
+3234,57,i_beg = string.ascii_letters.index(beg),0
+3235,58,i_end = string.ascii_letters.index(end),0
+3236,59,if i_beg > i_end:,0
+3237,60,"raise AnsibleError(""host range must have begin <= end"")",0
+3238,61,seq = list(string.ascii_letters[i_beg:i_end + 1:int(step)]),0
+3239,62,except ValueError:  ,0
+3240,63,"seq = range(int(beg), int(end) + 1, int(step))",0
+3241,64,,0
+3242,65,for rseq in seq:,0
+3243,66,"hname = ''.join((head, fill(rseq), tail))",0
+3244,67,,0
+3245,68,if detect_range(hname):,0
+3246,69,all_hosts.extend(expand_hostname_range(hname)),0
+3247,70,else:,0
+3248,71,all_hosts.append(hname),0
+3249,73,        return all_hosts,0
+3250,0,from inline import Here,0
+3251,1,,0
+3252,2,"def _normalize(self, name, columns, points):",0
+3253,3,"""""""Normalize data for the InfluxDB's data model.",0
+3254,4,,0
+3255,5,:return: a list of measurements.,0
+3256,6,"""""""",0
+3257,7,ret = [],0
+3258,8,,0
+3259,10,"data_dict = dict(zip(columns, points))",0
+3260,11,,0
+3261,14,"keys_list = [k.split(""."")[0] for k in columns if k.endswith("".key"")]",1
+3262,16,,0
+3263,17,if len(keys_list) == 0:,0
+3264,18,keys_list = [None],0
+3265,19,,0
+3266,20,for measurement in keys_list:,0
+3267,22,if measurement is not None:,0
+3268,23,fields = {,0
+3269,24,"k.replace(""{}."".format(measurement), """"): data_dict[k]",0
+3270,25,for k in data_dict,0
+3271,26,"if k.startswith(""{}."".format(measurement))",0
+3272,27,},0
+3273,28,else:,0
+3274,29,fields = data_dict,0
+3275,32,for k in fields:,0
+3276,34,if fields[k] is None:,0
+3277,35,continue,0
+3278,37,try:,0
+3279,38,fields[k] = float(fields[k]),0
+3280,39,"except (TypeError, ValueError):",0
+3281,41,try:,0
+3282,42,fields[k] = str(fields[k]),0
+3283,43,"except (TypeError, ValueError):",0
+3284,44,pass,0
+3285,46,tags = self.parse_tags(self.tags),0
+3286,47,"if ""key"" in fields and fields[""key""] in fields:",0
+3287,50,"tags[fields[""key""]] = str(fields[fields[""key""]])",0
+3288,52,"fields.pop(fields[""key""])",0
+3289,54,"tags[""hostname""] = self.hostname",0
+3290,57,"    return ret
+",0
+3291,0,"from typing import Dict, List",0
+3292,1,from inline import Here,0
+3293,2,,0
+3294,3,def extract_sota_table(table_lines: List[str]) -> Dict:,0
+3295,4,"""""""",0
+3296,5,Parse a SOTA table out of lines in markdown,0
+3297,6,,0
+3298,7,:param table_lines: lines in the SOTA table,0
+3299,8,:return:,0
+3300,9,"""""""",0
+3301,10,,0
+3302,11,sota = {},0
+3303,12,,0
+3304,13,header = table_lines[0],0
+3305,14,"header_cols = [h.strip() for h in header.split(""|"") if h.strip()]",1
+3306,16,cols_sanitized = [h.lower() for h in header_cols],1
+3307,18,"cols_sanitized = [re.sub("" +"", """", h).replace(""**"", """") for h in cols_sanitized]",1
+3308,20,,0
+3309,22,"if ""model"" in cols_sanitized:",0
+3310,23,"model_inx = cols_sanitized.index(""model"")",0
+3311,24,else:,0
+3312,25,print(,0
+3313,26,"""ERROR: Model name not found in this SOTA table, skipping...\n"",",0
+3314,27,"file=sys.stderr,",0
+3315,28,),0
+3316,29,"print("""".join(table_lines), file=sys.stderr)",0
+3317,30,return {},0
+3318,31,,0
+3319,32,"if ""paper/source"" in cols_sanitized:",0
+3320,33,"paper_inx = cols_sanitized.index(""paper/source"")",0
+3321,34,"elif ""paper"" in cols_sanitized:",0
+3322,35,"paper_inx = cols_sanitized.index(""paper"")",0
+3323,36,else:,0
+3324,37,print(,0
+3325,38,"""ERROR: Paper reference not found in this SOTA table, skipping...\n"",",0
+3326,39,"file=sys.stderr,",0
+3327,40,),0
+3328,41,"print("""".join(table_lines), file=sys.stderr)",0
+3329,42,return {},0
+3330,43,,0
+3331,44,"if ""code"" in cols_sanitized:",0
+3332,45,"code_inx = cols_sanitized.index(""code"")",0
+3333,46,else:,0
+3334,47,code_inx = None,0
+3335,48,,0
+3336,49,"metrics_inx = set(range(len(header_cols))) - set([model_inx, paper_inx, code_inx])",0
+3337,50,metrics_inx = sorted(list(metrics_inx)),0
+3338,51,,0
+3339,52,metrics_names = [header_cols[i] for i in metrics_inx],0
+3340,53,,0
+3341,54,"sota[""metrics""] = metrics_names",0
+3342,55,"sota[""rows""] = []",0
+3343,56,,0
+3344,57,min_cols = len(header_cols),0
+3345,58,,0
+3346,60,rows = table_lines[2:],0
+3347,61,for row in rows:,0
+3348,62,"row_cols = [h.strip() for h in row.split(""|"")][1:]",0
+3349,63,,0
+3350,64,if len(row_cols) < min_cols:,0
+3351,65,print(,0
+3352,66,"""This row doesn't have enough columns, skipping: %s"" % row,",0
+3353,67,"file=sys.stderr,",0
+3354,68,),0
+3355,69,continue,0
+3356,70,,0
+3357,72,metrics = {},0
+3358,73,for i in range(len(metrics_inx)):,0
+3359,74,metrics[metrics_names[i]] = row_cols[metrics_inx[i]],0
+3360,75,,0
+3361,77,"paper_title, paper_link = extract_paper_title_and_link(row_cols[paper_inx])",0
+3362,78,,0
+3363,80,"model_name, model_author = extract_model_name_and_author(row_cols[model_inx])",0
+3364,81,,0
+3365,82,sota_row = {,0
+3366,83,"""model_name"": model_name,",0
+3367,84,"""metrics"": metrics,",0
+3368,85,},0
+3369,86,,0
+3370,87,if paper_title is not None and paper_link is not None:,0
+3371,88,"sota_row[""paper_title""] = paper_title",0
+3372,89,"sota_row[""paper_url""] = paper_link",0
+3373,90,,0
+3374,92,if code_inx is not None:,0
+3375,93,"sota_row[""code_links""] = extract_code_links(row_cols[code_inx])",0
+3376,94,,0
+3377,95,"sota[""rows""].append(sota_row)",0
+3378,97,"    return sota
+",0
+3379,0,import sys,0
+3380,1,from inline import Here,0
+3381,2,,0
+3382,5,,0
+3383,6,"string1 = ""abcdefg""",0
+3384,7,"string2 = ""abd""",0
+3385,8,,0
+3386,9,class MWS:,0
+3387,10,"def minWindow(self, s: str, t: str) -> str:",0
+3388,11,"if t == """":",0
+3389,12,"return """"",0
+3390,13,,0
+3391,14,"countT, window = {}, {}",0
+3392,15,for c in t:,0
+3393,16,"countT[c] = 1 + countT.get(c, 0)",0
+3394,17,,0
+3395,18,"have, need = 0, len(countT)",0
+3396,19,"res, resLen = [-1, -1], float(""infinity"")",0
+3397,20,l = 0,0
+3398,21,for r in range(len(s)):,0
+3399,22,c = s[r],0
+3400,23,"window[c] = 1 + window.get(c, 0)",0
+3401,24,,0
+3402,25,if c in countT and window[c] == countT[c]:,0
+3403,26,have += 1,0
+3404,27,,0
+3405,28,while have == need:,0
+3406,30,if (r - l + 1) < resLen:,0
+3407,31,"res = [l, r]",0
+3408,32,resLen = r - l + 1,0
+3409,34,window[s[l]] -= 1,0
+3410,35,if s[l] in countT and window[s[l]] < countT[s[l]]:,0
+3411,36,have -= 1,0
+3412,37,l += 1,0
+3413,38,"l, r = res",0
+3414,39,"return s[l : r + 1] if resLen != float(""infinity"") else """"",0
+3415,40,,0
+3416,41,"def check(self, s: str, t: str) -> bool:",0
+3417,42,set1 = set(s),0
+3418,43,set2 = set(t),0
+3419,44,,0
+3420,45,for c in set2:,0
+3421,46,if c not in set1:,0
+3422,47,return False,0
+3423,48,,0
+3424,49,return True,0
+3425,50,,0
+3426,51,mws = MWS(),0
+3427,0,,0
+3428,4,,0
+3429,5,import sys,0
+3430,6,import random,0
+3431,7,from inline import Here,0
+3432,8,,0
+3433,10,,0
+3434,13,,0
+3435,15,input_list = sys.argv[1:],0
+3436,16,,0
+3437,17,"poss_digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'X', 'Y']",0
+3438,18,for iter in range(10):,0
+3439,20,"password = """"",0
+3440,21,for digit in range(6):,0
+3441,22,"password = password + str(poss_digits[random.randint(0, 11)])",0
+3442,23,,0
+3443,25,"print(password + "":"")",0
+3444,26,if(password.isdecimal()):,0
+3445,27,"print(""acceptable password: good combination!"")",0
+3446,28,else:,0
+3447,29,"print(""unacceptable password: all digits :("")",0
+3448,30,,0
+3449,32,ans = True,0
+3450,33,try:,0
+3451,34,num = int(password),0
+3452,35,except:,0
+3453,36,ans = False,0
+3454,37,,0
+3455,38,"print("""")",0
+3456,39,,0
+3457,0,,0
+3458,4,,0
+3459,5,import sys,0
+3460,6,import re,0
+3461,7,import random,0
+3462,8,from inline import Here,0
+3463,9,,0
+3464,11,,0
+3465,14,,0
+3466,16,input_list = sys.argv[1:],0
+3467,17,,0
+3468,18,"bin_dig = [""0"", ""1""]",0
+3469,19,for iter in range(10):,0
+3470,21,"bin_num = """"",0
+3471,22,for digit in range(8):,0
+3472,23,"bin_num = bin_num + str(bin_dig[random.randint(0, 1)])",0
+3473,24,,0
+3474,26,"left_bit = str(hex(int(bin_num[0:4], 2)))",0
+3475,27,"right_bit = str(hex(int(bin_num[4:8], 2)))",0
+3476,28,"res_hex = ""0x"" + left_bit[2] + right_bit[2]",0
+3477,29,"print(""0b""+ bin_num + "" -> "" + res_hex)",0
+3478,30,,0
+3479,0,,0
+3480,4,,0
+3481,5,import sys,0
+3482,6,import random,0
+3483,7,from inline import Here,0
+3484,8,,0
+3485,10,,0
+3486,12,,0
+3487,14,input_list = sys.argv[1:],0
+3488,15,,0
+3489,16,for iter in range(10):,0
+3490,17,"word = """"",0
+3491,18,"res = """"",0
+3492,19,for n in range(5):,0
+3493,21,"ch_idx = random.randint(0, 14)",0
+3494,22,word += chr(97 + ch_idx),0
+3495,23,res += chr(65 + ch_idx),0
+3496,24,,0
+3497,25,"print(""\"""" + word + ""\"".upper() -> "" + res)",0
+3498,26,,0
+3499,0,,0
+3500,4,,0
+3501,5,import sys,0
+3502,6,import random,0
+3503,7,from inline import Here,0
+3504,8,,0
+3505,10,,0
+3506,12,,0
+3507,14,input_list = sys.argv[1:],0
+3508,15,,0
+3509,16,for iter in range(10):,0
+3510,17,"word = """"",0
+3511,18,,0
+3512,20,for n in range(3):,0
+3513,21,"ch_idx = random.randint(0, 25)",0
+3514,22,word = chr(97 + ch_idx) + word + chr(97 + ch_idx),0
+3515,23,"print(""make_palindrome(\"""" + word[0:3] + ""\"") -> "" + word)",0
+3516,24,,0
+3517,0,,0
+3518,4,,0
+3519,5,import sys,0
+3520,6,import random,0
+3521,7,from inline import Here,0
+3522,8,,0
+3523,10,,0
+3524,13,,0
+3525,15,input_list = sys.argv[1:],0
+3526,16,,0
+3527,17,"op = {'+': lambda x, y: x + y,",0
+3528,18,"'*': lambda x, y: x * y,",0
+3529,19,"'-': lambda x, y: x - y,",0
+3530,20,"'/': lambda x, y: x / y,",0
+3531,21,"'%': lambda x, y: x % y,",0
+3532,22,"'^': lambda x, y: x ^ y}",0
+3533,23,,0
+3534,24,"sym = [""+"", ""*"", ""-"", ""/"", ""%"", ""^""]",0
+3535,25,,0
+3536,26,for iter in range(10):,0
+3537,27,,0
+3538,29,"opr = sym[random.randint(0, 3)]",0
+3539,30,"num1 = random.randint(0, 9)",0
+3540,31,low_bound = 0,0
+3541,32,"if(opr == ""/""):",0
+3542,33,low_bound = 1,0
+3543,34,"num2 = random.randint(low_bound, 9)",0
+3544,35,,0
+3545,37,"print(str(num1) + "" "" + opr  + "" "" + str(num2) + "" = "" + str(op[opr](num1, num2)))",0
+3546,38,,0
+3547,41,"    
+",0
+3548,0,,0
+3549,4,,0
+3550,5,import sys,0
+3551,6,from inline import Here,0
+3552,7,,0
+3553,9,,0
+3554,11,,0
+3555,13,input_list = sys.argv[1:],0
+3556,14,,0
+3557,15,"sent = [""I am who I think I am"",",0
+3558,16,"""I am who you think I am"",",0
+3559,17,"""You are who I think you are"",",0
+3560,18,"""You are who you think you are"",",0
+3561,19,"""I am who I think you think I am"",",0
+3562,20,"""You are who you think I think you are"",",0
+3563,21,"""think"",",0
+3564,22,"""think think""]",0
+3565,23,,0
+3566,24,for iter in range(len(sent)):,0
+3567,25,curr_s = sent[iter],0
+3568,26,arr_s = [],0
+3569,27,"while(""think"" in curr_s):",0
+3570,28,"part_s = curr_s.rpartition(""think"")",0
+3571,29,curr_s = part_s[0],0
+3572,30,arr_s = [part_s[2]] + arr_s,0
+3573,31,arr_s = [curr_s] + arr_s,0
+3574,32,print(arr_s),0
+3575,33,,0
+3576,0,<<<<<<< HEAD,0
+3577,1,,0
+3578,5,,0
+3579,6,import sys,0
+3580,7,import random,0
+3581,8,from inline import Here,0
+3582,9,,0
+3583,11,,0
+3584,13,,0
+3585,15,input_list = sys.argv[1:],0
+3586,16,,0
+3587,17,for iter in range(10):,0
+3588,19,"rand_len = random.randint(1, 10)",0
+3589,20,"letters = [chr(97 + random.randint(0, 25)) for i in range(rand_len)]",0
+3590,21,"word = """".join(letters)",0
+3591,22,,0
+3592,24,"print(""'"" + "" ""*(10-len(word)) + word + ""'"")",0
+3593,25,,0
+3594,28,=======,0
+3595,29,from inline import Here,0
+3596,30,,0
+3597,31,,0
+3598,32,"sample = ""Hello""",0
+3599,33,size_string = 32,0
+3600,34,doubled = sample.zfill(size_string),1
+3601,36,">>>>>>> sydney_classify
+",0
+3602,0,from inline import Here,0
+3603,1,,0
+3604,3,,0
+3605,4,"s = ""hi there""",0
+3606,5,split_str_list = s.split(),0
+3607,6,,0
+3608,0,import re,0
+3609,1,from inline import Here,0
+3610,2,,0
+3611,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+3612,4,num = 10,0
+3613,5,,0
+3614,7,result = text[::-1],0
+3615,8,"print(""Reversed text: "", result)",0
+3616,9,,0
+3617,11,"result = re.findall(r""\bs\w+"", text)",1
+3618,13,"print(""Words starting with 's': "", result)",0
+3619,14,,0
+3620,16,count = 0,0
+3621,17,while num:,0
+3622,18,count += num & 1,0
+3623,19,num >>= 1,0
+3624,20,"print(""Number of set bits: "", count)",0
+3625,21,,0
+3626,23,"result = ""-"".join(text.split())",0
+3627,24,"print(""Text joined with '-': "", result)",0
+3628,25,,0
+3629,27,"result = re.sub(""is"", ""was"", text)",0
+3630,28,"print(""Text with 'is' replaced: "", result)",0
+3631,29,,0
+3632,31,num = num ^ (1 << (3 - 1)),0
+3633,32,"print(""Number after toggling 3rd bit: "", num)",0
+3634,33,,0
+3635,35,result = len(text),0
+3636,36,"print(""Length of text: "", result)",0
+3637,37,,0
+3638,39,"result = re.findall(r""\d"", text)",0
+3639,40,"print(""Digits in text: "", result)",0
+3640,41,,0
+3641,43,result = bin(num),0
+3642,44,"print(""Binary representation of num: "", result)",0
+3643,45,,0
+3644,48,"print(""Text split by whitespace: "", result)
+",0
+3645,0,from inline import Here,0
+3646,1,,0
+3647,3,,0
+3648,4,"s = ""hi there""",0
+3649,5,split_str_list = s.split(),0
+3650,6,,0
+3651,8,split_str_list.reverse(),0
+3652,9,,0
+3653,0,import sys,0
+3654,1,from inline import Here,0
+3655,2,,0
+3656,5,,0
+3657,6,"string1 = ""abcdefg""",0
+3658,7,"string2 = ""abd""",0
+3659,8,,0
+3660,9,class MWS:,0
+3661,10,"def minWindow(self, s: str, t: str) -> str:",0
+3662,11,"if t == """":",0
+3663,12,"return """"",0
+3664,13,,0
+3665,14,"countT, window = {}, {}",0
+3666,15,for c in t:,0
+3667,16,"countT[c] = 1 + countT.get(c, 0)",0
+3668,17,,0
+3669,18,"have, need = 0, len(countT)",0
+3670,19,"res, resLen = [-1, -1], float(""infinity"")",0
+3671,20,l = 0,0
+3672,21,for r in range(len(s)):,0
+3673,22,c = s[r],0
+3674,23,"window[c] = 1 + window.get(c, 0)",0
+3675,24,,0
+3676,25,if c in countT and window[c] == countT[c]:,0
+3677,26,have += 1,0
+3678,27,,0
+3679,28,while have == need:,0
+3680,30,if (r - l + 1) < resLen:,0
+3681,31,"res = [l, r]",0
+3682,32,resLen = r - l + 1,0
+3683,34,window[s[l]] -= 1,0
+3684,35,if s[l] in countT and window[s[l]] < countT[s[l]]:,0
+3685,36,have -= 1,0
+3686,37,l += 1,0
+3687,38,"l, r = res",0
+3688,39,"return s[l : r + 1] if resLen != float(""infinity"") else """"",0
+3689,40,,0
+3690,41,"def check(self, s: str, t: str) -> bool:",0
+3691,42,set1 = set(s),0
+3692,43,set2 = set(t),0
+3693,44,,0
+3694,45,for c in set2:,0
+3695,46,if c not in set1:,0
+3696,47,return False,0
+3697,48,,0
+3698,49,return True,0
+3699,50,,0
+3700,51,mws = MWS(),0
+3701,52,"finder = mws.minWindow(string1, string2)",0
+3702,53,,0
+3703,0,from inline import Here,0
+3704,1,,0
+3705,2,,0
+3706,3,def num_to_hex(num): ,0
+3707,4,"return ""0x%x"" % num",0
+3708,5,,0
+3709,6,,0
+3710,7,def num_to_bin(num): ,0
+3711,8,return bin(num),0
+3712,9,,0
+3713,10,,0
+3714,11,def bin_str_to_int(bin_str): ,0
+3715,12,"return int(bin_str[2:], 2)",0
+3716,13,,0
+3717,14,,0
+3718,15,def hex_str_to_int(hex): ,0
+3719,16,"return int(hex[2:], 16)",0
+3720,17,,0
+3721,18,,0
+3722,19,def hex_str_to_bin_str(hex_str): ,0
+3723,20,return num_to_bin(hex_str_to_int(hex_str)),0
+3724,21,,0
+3725,24,num = 0,0
+3726,0,import re,0
+3727,1,from inline import Here,0
+3728,2,,0
+3729,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+3730,4,num = 10,0
+3731,5,,0
+3732,7,result = text[::-1],0
+3733,8,"print(""Reversed text: "", result)",0
+3734,9,,0
+3735,11,"result = re.findall(r""\bs\w+"", text)",0
+3736,12,"print(""Words starting with 's': "", result)",0
+3737,13,,0
+3738,15,count = 0,0
+3739,16,while num:,0
+3740,17,count += num & 1,1
+3741,19,num >>= 1,0
+3742,20,"print(""Number of set bits: "", count)",0
+3743,21,,0
+3744,23,"result = ""-"".join(text.split())",0
+3745,24,"print(""Text joined with '-': "", result)",0
+3746,25,,0
+3747,27,"result = re.sub(""is"", ""was"", text)",0
+3748,28,"print(""Text with 'is' replaced: "", result)",0
+3749,29,,0
+3750,31,num = num ^ (1 << (3 - 1)),0
+3751,32,"print(""Number after toggling 3rd bit: "", num)",0
+3752,33,,0
+3753,35,result = len(text),0
+3754,36,"print(""Length of text: "", result)",0
+3755,37,,0
+3756,39,"result = re.findall(r""\d"", text)",0
+3757,40,"print(""Digits in text: "", result)",0
+3758,41,,0
+3759,43,result = bin(num),0
+3760,44,"print(""Binary representation of num: "", result)",0
+3761,45,,0
+3762,48,"print(""Text split by whitespace: "", result)
+",0
+3763,0,from inline import Here,0
+3764,1,,0
+3765,2,,0
+3766,3,def num_to_hex(num): ,0
+3767,4,"return ""0x%x"" % num",0
+3768,5,,0
+3769,6,,0
+3770,7,def num_to_bin(num): ,0
+3771,8,return bin(num),0
+3772,9,,0
+3773,10,,0
+3774,11,def bin_str_to_int(bin_str): ,0
+3775,12,"return int(bin_str[2:], 2)",0
+3776,13,,0
+3777,14,,0
+3778,15,def hex_str_to_int(hex): ,0
+3779,16,"return int(hex[2:], 16)",0
+3780,17,,0
+3781,18,,0
+3782,19,def hex_str_to_bin_str(hex_str): ,0
+3783,20,return num_to_bin(hex_str_to_int(hex_str)),0
+3784,21,,0
+3785,24,num = 0,0
+3786,25,hex = num_to_hex(num),0
+3787,26,,0
+3788,28,num = 5,0
+3789,0,from inline import Here,0
+3790,1,,0
+3791,2,,0
+3792,3,def num_to_hex(num): ,0
+3793,4,"return ""0x%x"" % num",0
+3794,5,,0
+3795,6,,0
+3796,7,def num_to_bin(num): ,0
+3797,8,return bin(num),0
+3798,9,,0
+3799,10,,0
+3800,11,def bin_str_to_int(bin_str): ,0
+3801,12,"return int(bin_str[2:], 2)",0
+3802,13,,0
+3803,14,,0
+3804,15,def hex_str_to_int(hex): ,0
+3805,16,"return int(hex[2:], 16)",0
+3806,17,,0
+3807,18,,0
+3808,19,def hex_str_to_bin_str(hex_str): ,0
+3809,20,return num_to_bin(hex_str_to_int(hex_str)),0
+3810,21,,0
+3811,24,num = 0,0
+3812,25,hex = num_to_hex(num),0
+3813,26,,0
+3814,28,num = 5,0
+3815,29,binary = num_to_bin(num),0
+3816,30,,0
+3817,32,binary_str = '0b0101',0
+3818,0,import re,0
+3819,1,from inline import Here,0
+3820,2,,0
+3821,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+3822,4,num = 10,0
+3823,5,,0
+3824,7,result = text[::-1],0
+3825,8,"print(""Reversed text: "", result)",0
+3826,9,,0
+3827,11,"result = re.findall(r""\bs\w+"", text)",0
+3828,12,"print(""Words starting with 's': "", result)",0
+3829,13,,0
+3830,15,count = 0,0
+3831,16,while num:,0
+3832,17,count += num & 1,0
+3833,18,num >>= 1,0
+3834,19,"print(""Number of set bits: "", count)",0
+3835,20,,0
+3836,22,"result = ""-"".join(text.split())",1
+3837,24,"print(""Text joined with '-': "", result)",0
+3838,25,,0
+3839,27,"result = re.sub(""is"", ""was"", text)",0
+3840,28,"print(""Text with 'is' replaced: "", result)",0
+3841,29,,0
+3842,31,num = num ^ (1 << (3 - 1)),0
+3843,32,"print(""Number after toggling 3rd bit: "", num)",0
+3844,33,,0
+3845,35,result = len(text),0
+3846,36,"print(""Length of text: "", result)",0
+3847,37,,0
+3848,39,"result = re.findall(r""\d"", text)",0
+3849,40,"print(""Digits in text: "", result)",0
+3850,41,,0
+3851,43,result = bin(num),0
+3852,44,"print(""Binary representation of num: "", result)",0
+3853,45,,0
+3854,48,"print(""Text split by whitespace: "", result)
+",0
+3855,0,from inline import Here,0
+3856,1,,0
+3857,2,,0
+3858,3,def num_to_hex(num): ,0
+3859,4,"return ""0x%x"" % num",0
+3860,5,,0
+3861,6,,0
+3862,7,def num_to_bin(num): ,0
+3863,8,return bin(num),0
+3864,9,,0
+3865,10,,0
+3866,11,def bin_str_to_int(bin_str): ,0
+3867,12,"return int(bin_str[2:], 2)",0
+3868,13,,0
+3869,14,,0
+3870,15,def hex_str_to_int(hex): ,0
+3871,16,"return int(hex[2:], 16)",0
+3872,17,,0
+3873,18,,0
+3874,19,def hex_str_to_bin_str(hex_str): ,0
+3875,20,return num_to_bin(hex_str_to_int(hex_str)),0
+3876,21,,0
+3877,24,num = 0,0
+3878,25,hex = num_to_hex(num),0
+3879,26,,0
+3880,28,num = 5,0
+3881,29,binary = num_to_bin(num),0
+3882,30,,0
+3883,32,binary_str = '0b0101',0
+3884,33,num = bin_str_to_int(binary_str),0
+3885,34,,0
+3886,36,hex_str = '0x01',0
+3887,0,import re,0
+3888,1,from inline import Here,0
+3889,2,,0
+3890,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+3891,4,num = 10,0
+3892,5,,0
+3893,7,result = text[::-1],0
+3894,8,"print(""Reversed text: "", result)",0
+3895,9,,0
+3896,11,"result = re.findall(r""\bs\w+"", text)",0
+3897,12,"print(""Words starting with 's': "", result)",0
+3898,13,,0
+3899,15,count = 0,0
+3900,16,while num:,0
+3901,17,count += num & 1,0
+3902,18,num >>= 1,0
+3903,19,"print(""Number of set bits: "", count)",0
+3904,20,,0
+3905,22,"result = ""-"".join(text.split())",0
+3906,23,"print(""Text joined with '-': "", result)",0
+3907,24,,0
+3908,26,"result = re.sub(""is"", ""was"", text)",0
+3909,27,"print(""Text with 'is' replaced: "", result)",0
+3910,28,,0
+3911,30,num = num ^ (1 << (3 - 1)),1
+3912,32,"print(""Number after toggling 3rd bit: "", num)",0
+3913,33,,0
+3914,35,result = len(text),0
+3915,36,"print(""Length of text: "", result)",0
+3916,37,,0
+3917,39,"result = re.findall(r""\d"", text)",0
+3918,40,"print(""Digits in text: "", result)",0
+3919,41,,0
+3920,43,result = bin(num),0
+3921,44,"print(""Binary representation of num: "", result)",0
+3922,45,,0
+3923,48,"print(""Text split by whitespace: "", result)
+",0
+3924,0,from inline import Here,0
+3925,1,,0
+3926,2,,0
+3927,3,def num_to_hex(num): ,0
+3928,4,"return ""0x%x"" % num",0
+3929,5,,0
+3930,6,,0
+3931,7,def num_to_bin(num): ,0
+3932,8,return bin(num),0
+3933,9,,0
+3934,10,,0
+3935,11,def bin_str_to_int(bin_str): ,0
+3936,12,"return int(bin_str[2:], 2)",0
+3937,13,,0
+3938,14,,0
+3939,15,def hex_str_to_int(hex): ,0
+3940,16,"return int(hex[2:], 16)",0
+3941,17,,0
+3942,18,,0
+3943,19,def hex_str_to_bin_str(hex_str): ,0
+3944,20,return num_to_bin(hex_str_to_int(hex_str)),0
+3945,21,,0
+3946,24,num = 0,0
+3947,25,hex = num_to_hex(num),0
+3948,26,,0
+3949,28,num = 5,0
+3950,29,binary = num_to_bin(num),0
+3951,30,,0
+3952,32,binary_str = '0b0101',0
+3953,33,num = bin_str_to_int(binary_str),0
+3954,34,,0
+3955,36,hex_str = '0x01',0
+3956,37,num = hex_str_to_int(hex_str),0
+3957,38,,0
+3958,40,hex_str = '0x02',0
+3959,0,import re,0
+3960,1,from inline import Here,0
+3961,2,,0
+3962,3,"text = ""This is a sentence with multiple words and numbers 1234567890.""",0
+3963,4,num = 10,0
+3964,5,,0
+3965,7,result = text[::-1],0
+3966,8,"print(""Reversed text: "", result)",0
+3967,9,,0
+3968,11,"result = re.findall(r""\bs\w+"", text)",0
+3969,12,"print(""Words starting with 's': "", result)",0
+3970,13,,0
+3971,15,count = 0,0
+3972,16,while num:,0
+3973,17,count += num & 1,0
+3974,18,num >>= 1,0
+3975,19,"print(""Number of set bits: "", count)",0
+3976,20,,0
+3977,22,"result = ""-"".join(text.split())",0
+3978,23,"print(""Text joined with '-': "", result)",0
+3979,24,,0
+3980,26,"result = re.sub(""is"", ""was"", text)",0
+3981,27,"print(""Text with 'is' replaced: "", result)",0
+3982,28,,0
+3983,30,num = num ^ (1 << (3 - 1)),0
+3984,31,"print(""Number after toggling 3rd bit: "", num)",0
+3985,32,,0
+3986,34,result = len(text),1
+3987,36,"print(""Length of text: "", result)",0
+3988,37,,0
+3989,39,"result = re.findall(r""\d"", text)",0
+3990,40,"print(""Digits in text: "", result)",0
+3991,41,,0
+3992,43,result = bin(num),0
+3993,44,"print(""Binary representation of num: "", result)",0
+3994,45,,0
+3995,48,"print(""Text split by whitespace: "", result)
+",0
+3996,0,from inline import Here,0
+3997,1,,0
+3998,2,"text = ""This is a string with multiple words and numbers 1234567890.""",0
+3999,3,num = 10,0
+4000,4,,0
+4001,6,result = bin(num),0
+4002,7,"print(""Binary representation of num: "", result)",0
+4003,8,,0
+4004,10,count = 0,0
+4005,11,while num:,0
+4006,12,count += num & 1,0
+4007,13,num >>= 1,0
+4008,14,"print(""Number of set bits: "", count)",0
+4009,15,,0
+4010,17,binary = bin(num)[2:],0
+4011,18,result = binary[::-1],0
+4012,19,"print(""Reversed binary representation: "", result)",0
+4013,20,,0
+4014,22,num = num ^ (1 << (3 - 1)),0
+4015,23,"print(""Number after toggling 3rd bit: "", num)",0
+4016,24,,0
+4017,26,"result = int(binary, 2)",0
+4018,27,"print(""Integer representation of binary: "", result)",0
+4019,28,,0
+4020,30,result = text[::-1],0
+4021,31,"print(""Reversed text: "", result)",0
+4022,32,,0
+4023,34,result = text.split(),0
+4024,35,"print(""Text split by whitespace: "", result)",0
+4025,36,,0
+4026,38,"result = ""-"".join(text.split())",0
+4027,39,"print(""Text joined with '-': "", result)",0
+4028,40,,0
+4029,42,result = len(text),0
+4030,43,"print(""Length of text: "", result)",0
+4031,44,,0
+4032,46,result = text.upper(),1
+4033,48,"print(""Text in uppercase: "", result)",0
+4034,49,,0
+4035,51,result = text.lower(),0
+4036,52,"print(""Text in lowercase: "", result)",0
+4037,53,,0
+4038,55,"result = text.replace(""is"", ""was"")",0
+4039,56,"print(""Text with 'is' replaced: "", result)",0
+4040,57,,0
+4041,59,"result = [c for c in text]
+",0
+4042,0,import sys,0
+4043,1,from inline import Here,0
+4044,2,,0
+4045,5,,0
+4046,7,"brackets = ""[][][][[[]]]{}}""",0
+4047,8,,0
+4048,9,class Valid_Parenthesis:,0
+4049,10,"def isValid(self, s: str) -> bool:",0
+4050,11,"Map = {"")"": ""("", ""]"": ""["", ""}"": ""{""}",0
+4051,12,stack = [],0
+4052,13,,0
+4053,14,for c in s:,0
+4054,15,if c not in Map:,0
+4055,16,stack.append(c),0
+4056,17,continue,0
+4057,18,if not stack or stack[-1] != Map[c]:,0
+4058,19,return False,0
+4059,20,stack.pop(),0
+4060,21,,0
+4061,22,return not stack,0
+4062,23,,0
+4063,24,valid_parenthesis = Valid_Parenthesis(),0
+4064,0,from inline import Here,0
+4065,1,,0
+4066,2,"text = ""This is a string with multiple words and numbers 1234567890.""",0
+4067,3,num = 10,0
+4068,4,,0
+4069,6,result = bin(num),0
+4070,7,"print(""Binary representation of num: "", result)",0
+4071,8,,0
+4072,10,count = 0,0
+4073,11,while num:,0
+4074,12,count += num & 1,0
+4075,13,num >>= 1,0
+4076,14,"print(""Number of set bits: "", count)",0
+4077,15,,0
+4078,17,binary = bin(num)[2:],0
+4079,18,result = binary[::-1],0
+4080,19,"print(""Reversed binary representation: "", result)",0
+4081,20,,0
+4082,22,num = num ^ (1 << (3 - 1)),0
+4083,23,"print(""Number after toggling 3rd bit: "", num)",0
+4084,24,,0
+4085,26,"result = int(binary, 2)",0
+4086,27,"print(""Integer representation of binary: "", result)",0
+4087,28,,0
+4088,30,result = text[::-1],0
+4089,31,"print(""Reversed text: "", result)",0
+4090,32,,0
+4091,34,result = text.split(),0
+4092,35,"print(""Text split by whitespace: "", result)",0
+4093,36,,0
+4094,38,"result = ""-"".join(text.split())",0
+4095,39,"print(""Text joined with '-': "", result)",0
+4096,40,,0
+4097,42,result = len(text),0
+4098,43,"print(""Length of text: "", result)",0
+4099,44,,0
+4100,46,result = text.upper(),0
+4101,47,"print(""Text in uppercase: "", result)",0
+4102,48,,0
+4103,50,result = text.lower(),1
+4104,52,"print(""Text in lowercase: "", result)",0
+4105,53,,0
+4106,55,"result = text.replace(""is"", ""was"")",0
+4107,56,"print(""Text with 'is' replaced: "", result)",0
+4108,57,,0
+4109,59,"result = [c for c in text]
+",0
+4110,0,from inline import Here,0
+4111,1,,0
+4112,2,"text = ""This is a string with multiple words and numbers 1234567890.""",0
+4113,3,num = 10,0
+4114,4,,0
+4115,6,result = bin(num),0
+4116,7,"print(""Binary representation of num: "", result)",0
+4117,8,,0
+4118,10,count = 0,0
+4119,11,while num:,0
+4120,12,count += num & 1,0
+4121,13,num >>= 1,0
+4122,14,"print(""Number of set bits: "", count)",0
+4123,15,,0
+4124,17,binary = bin(num)[2:],0
+4125,18,result = binary[::-1],0
+4126,19,"print(""Reversed binary representation: "", result)",0
+4127,20,,0
+4128,22,num = num ^ (1 << (3 - 1)),0
+4129,23,"print(""Number after toggling 3rd bit: "", num)",0
+4130,24,,0
+4131,26,"result = int(binary, 2)",0
+4132,27,"print(""Integer representation of binary: "", result)",0
+4133,28,,0
+4134,30,result = text[::-1],0
+4135,31,"print(""Reversed text: "", result)",0
+4136,32,,0
+4137,34,result = text.split(),0
+4138,35,"print(""Text split by whitespace: "", result)",0
+4139,36,,0
+4140,38,"result = ""-"".join(text.split())",0
+4141,39,"print(""Text joined with '-': "", result)",0
+4142,40,,0
+4143,42,result = len(text),0
+4144,43,"print(""Length of text: "", result)",0
+4145,44,,0
+4146,46,result = text.upper(),0
+4147,47,"print(""Text in uppercase: "", result)",0
+4148,48,,0
+4149,50,result = text.lower(),0
+4150,51,"print(""Text in lowercase: "", result)",0
+4151,52,,0
+4152,54,"result = text.replace(""is"", ""was"")",1
+4153,56,"print(""Text with 'is' replaced: "", result)",0
+4154,57,,0
+4155,59,"result = [c for c in text]
+",0
+4156,0,from inline import Here,0
+4157,1,,0
+4158,2,"text = ""This is a string with multiple words and numbers 1234567890.""",0
+4159,3,num = 10,0
+4160,4,,0
+4161,6,result = bin(num),0
+4162,7,"print(""Binary representation of num: "", result)",0
+4163,8,,0
+4164,10,count = 0,0
+4165,11,while num:,0
+4166,12,count += num & 1,0
+4167,13,num >>= 1,0
+4168,14,"print(""Number of set bits: "", count)",0
+4169,15,,0
+4170,17,binary = bin(num)[2:],0
+4171,18,result = binary[::-1],0
+4172,19,"print(""Reversed binary representation: "", result)",0
+4173,20,,0
+4174,22,num = num ^ (1 << (3 - 1)),0
+4175,23,"print(""Number after toggling 3rd bit: "", num)",0
+4176,24,,0
+4177,26,"result = int(binary, 2)",0
+4178,27,"print(""Integer representation of binary: "", result)",0
+4179,28,,0
+4180,30,result = text[::-1],0
+4181,31,"print(""Reversed text: "", result)",0
+4182,32,,0
+4183,34,result = text.split(),0
+4184,35,"print(""Text split by whitespace: "", result)",0
+4185,36,,0
+4186,38,"result = ""-"".join(text.split())",0
+4187,39,"print(""Text joined with '-': "", result)",0
+4188,40,,0
+4189,42,result = len(text),0
+4190,43,"print(""Length of text: "", result)",0
+4191,44,,0
+4192,46,result = text.upper(),0
+4193,47,"print(""Text in uppercase: "", result)",0
+4194,48,,0
+4195,50,result = text.lower(),0
+4196,51,"print(""Text in lowercase: "", result)",0
+4197,52,,0
+4198,54,"result = text.replace(""is"", ""was"")",0
+4199,55,"print(""Text with 'is' replaced: "", result)",0
+4200,56,,0
+4201,58,result = [c for c in text],1
+4202,60,"print(""Text split into individual characters: "", result)
+",0
+4203,1,,0
+4204,2,from inline import Here,0
+4205,3,,0
+4206,4,class Solution(object):,0
+4207,5,"def simplifyPath(self, path):",0
+4208,6,"""""""",0
+4209,7,:type path: str,0
+4210,8,:rtype: str,0
+4211,9,"""""""",0
+4212,10,result = [],0
+4213,11,plist = path.split('/'),0
+4214,12,for pos in plist:,0
+4215,13,if pos:,0
+4216,14,if pos == '..':,0
+4217,15,try:,0
+4218,17,result.pop(),0
+4219,18,except:,0
+4220,20,result = [],0
+4221,21,elif pos != '.':,0
+4222,22,result.append(pos),0
+4223,23,print(result),0
+4224,24,result2 = '/'+'/'.join(result),1
+4225,26,,0
+4226,27,return result2,0
+4227,29,"print(Solution.simplifyPath(""s"", ""he/4/  //1/./65d""))",0
+4228,0,from inline import Here,0
+4229,1,,0
+4230,2,"sample = ""Hello""",0
+4231,3,size_string = 32,0
+4232,1,,0
+4233,2,from inline import Here,0
+4234,3,,0
+4235,4,class Solution(object):,0
+4236,5,"def longestPalindrome(self, s):",0
+4237,6,"""""""",0
+4238,7,:type s: str,0
+4239,8,:rtype: str,0
+4240,9,"""""""",0
+4241,13,ls = len(s),0
+4242,14,if ls <= 1 or len(set(s)) == 1:,0
+4243,15,return s,0
+4244,16,,0
+4245,17,temp_s = ',1
+4246,19,,0
+4247,21,tls = len(temp_s),0
+4248,22,"seed = range(1, tls - 1)",0
+4249,24,len_table = [0] * tls,0
+4250,25,"for step in range(1, tls / 2 + 1):",0
+4251,26,final = [],0
+4252,27,for pos in seed:,0
+4253,28,if pos - step < 0 or pos + step >= tls:,0
+4254,29,continue,0
+4255,30,if temp_s[pos - step] != temp_s[pos + step]:,0
+4256,31,continue,0
+4257,32,final.append(pos),0
+4258,33,if temp_s[pos - step] == ',0
+4259,34,continue,0
+4260,35,len_table[pos] = step,0
+4261,36,seed = final,0
+4262,37,"max_pos, max_step = 0, 0",0
+4263,38,"for i, s in enumerate(len_table):",0
+4264,39,if s >= max_step:,0
+4265,40,max_step = s,0
+4266,41,max_pos = i,0
+4267,42,"return temp_s[max_pos - max_step:max_pos + max_step + 1].translate(None, '",0
+4268,43,,0
+4269,44,if __name__ == '__main__':,0
+4270,47,"    print(s.longestPalindrome(""abcbe""))",0
+4271,0,from inline import Here,0
+4272,1,,0
+4273,2,class Solution(object):,0
+4274,3,"def permuteUnique(self, nums):",0
+4275,5,res = [[]],0
+4276,6,for i in range(len(nums)):,0
+4277,7,cache = set(),0
+4278,8,while len(res[0]) == i:,0
+4279,9,curr = res.pop(0),0
+4280,10,for j in range(len(curr) + 1):,0
+4281,12,new_perm = curr[:j] + [nums[i]] + curr[j:],0
+4282,13,print(new_perm),0
+4283,14,"stemp = ''.join(map(str, new_perm))",1
+4284,16,,0
+4285,17,print(stemp),0
+4286,18,if stemp not in cache:,0
+4287,19,cache.add(stemp),0
+4288,20,res.append(new_perm),0
+4289,21,return res,0
+4290,23,"Solution.permuteUnique(""l"", '1234')",0
+4291,0,from inline import Here,0
+4292,1,,0
+4293,2,class Solution(object):,0
+4294,3,"def permuteUnique(self, nums):",0
+4295,5,res = [[]],0
+4296,6,for i in range(len(nums)):,0
+4297,7,cache = set(),0
+4298,8,while len(res[0]) == i:,0
+4299,9,curr = res.pop(0),0
+4300,10,for j in range(len(curr) + 1):,0
+4301,12,new_perm = curr[:j] + [nums[i]] + curr[j:],0
+4302,13,print(new_perm),0
+4303,14,"stemp = ''.join(map(str, new_perm))",1
+4304,16,,0
+4305,17,print(stemp),0
+4306,18,if stemp not in cache:,0
+4307,19,cache.add(stemp),0
+4308,20,res.append(new_perm),0
+4309,21,return res,0
+4310,23,"Solution.permuteUnique(""l"", '1234')",0
+4311,0,from inline import Here,0
+4312,1,,0
+4313,2,from collections import deque,0
+4314,3,,0
+4315,4,"def calculate(self, s):",0
+4316,5,def precedence(c):,0
+4317,6,return c == '*' or c == '/',0
+4318,7,def toPostfix(s):,0
+4319,8,"op, post = deque(), ''",0
+4320,9,for c in s:,0
+4321,10,if c == ' ': continue,0
+4322,11,elif c.isdigit(): post += c,0
+4323,12,else:,0
+4324,13,post += '|',0
+4325,14,while op and precedence(c) <= precedence(op[-1]):,0
+4326,15,post += op.pop(),0
+4327,16,op.append(c),0
+4328,17,,0
+4329,18,return post + '|' + ''.join(reversed(op)),0
+4330,19,,0
+4331,20,"s, num, i = toPostfix(s), deque(), 0",0
+4332,21,while i < len(s):,0
+4333,22,if s[i].isdigit():,0
+4334,23,"j = s.find('|', i+1)",0
+4335,26,num.append(int(s[i:j])),0
+4336,27,i = j,0
+4337,28,else:,0
+4338,29,"num1, num2 = num.pop(), num.pop()",0
+4339,30,if   s[i] == '*': num.append(num2 * num1),0
+4340,31,elif s[i] == '/': num.append(num2 // num1),0
+4341,32,elif s[i] == '+': num.append(num2 + num1),0
+4342,33,elif s[i] == '-': num.append(num2 - num1),0
+4343,34,i += 1,0
+4344,36,"    return num.pop()
+",0
+4345,0,from inline import Here,0
+4346,1,from typing import List,0
+4347,2,,0
+4348,3,"def partition(self, s: str) -> List[List[str]]:",0
+4349,4,"res, part = [], []",0
+4350,5,def dfs(i):,0
+4351,6,if i >= len(s):,0
+4352,7,res.append(part.copy()),0
+4353,8,return,0
+4354,9,"for j in range(i, len(s)):",0
+4355,10,"if self.isPali(s, i, j):",0
+4356,11,part.append(s[i : j + 1]),0
+4357,14,dfs(j + 1),0
+4358,15,part.pop(),0
+4359,16,dfs(0),0
+4360,17,return res,0
+4361,18,,0
+4362,19,"def isPali(self, s, l, r):",0
+4363,20,while l < r:,0
+4364,21,if s[l] != s[r]:,0
+4365,22,return False,0
+4366,24,"    return True
+",0
+4367,0,from inline import Here,0
+4368,1,import math,0
+4369,2,,0
+4370,3,"def getPermutation(self, n: int, k: int) -> str:",0
+4371,4,s=[],0
+4372,5,for i in range(n):,0
+4373,6,s.append(str(i+1)),0
+4374,7,,0
+4375,8,"def fun(s,k,l):",0
+4376,9,p=[],0
+4377,10,fact=math.factorial(l),0
+4378,12,while (s!=[]):,0
+4379,13,fact=fact//l,0
+4380,15,"i,k=divmod(k,fact)",0
+4381,17,x=s[i],0
+4382,18,p.append(x),0
+4383,19,s=s[:i]+s[i+1:],0
+4384,23,l-=1,0
+4385,25,"return """".join(p)",0
+4386,27,"    return fun(s,k-1,n)
+",0
+4387,0,,0
+4388,4,,0
+4389,5,import sys,0
+4390,6,import re,0
+4391,7,from inline import Here,0
+4392,8,,0
+4393,10,,0
+4394,12,,0
+4395,14,input_list = sys.argv[1:],0
+4396,15,,0
+4397,17,"txt = ""Have you anything ever had a dream that you, um, you had, your, you- you could, "" \",0
+4398,18,"""youâ€™ll do, you- you wants, you, you could do so, you- youâ€™ll do, you could- "" \",0
+4399,19,"""you, you want, you want him to do you so much you could do anything?""",0
+4400,20,,0
+4401,22,"res = re.findall(r""[- â€™A-Za-z]*,|[- â€™A-Za-z]*\?"", txt)",0
+4402,23,idx = 0,0
+4403,24,for tok in res:,0
+4404,25,"tok = tok.replace("","", """")",0
+4405,26,res[idx] = tok,0
+4406,27,idx += 1,0
+4407,28,,0
+4408,30,"ans = txt.split("","")",0
+4409,31,,0
+4410,0,from inline import Here,0
+4411,1,,0
+4412,2,def encode(longUrl: str) -> str:,0
+4413,3,encodeMap = {},0
+4414,4,decodeMap = {},0
+4415,5,"base = ""http://tinyurl.com/""",0
+4416,6,if longUrl not in encodeMap:,0
+4417,7,shortUrl = base + str(len(encodeMap) + 1),0
+4418,10,encodeMap[longUrl] = shortUrl,0
+4419,11,decodeMap[shortUrl] = longUrl,0
+4420,12,return encodeMap[longUrl],0
+4421,13,,0
+4422,15,"    return self.decodeMap[shortUrl]
+",0
+4423,0,from inline import Here,0
+4424,1,,0
+4425,2,"def longestPalindrome(self, s: str) -> str:",0
+4426,3,"res = """"",0
+4427,4,resLen = 0,0
+4428,5,,0
+4429,6,for i in range(len(s)):,0
+4430,8,"l, r = i, i",0
+4431,9,while l >= 0 and r < len(s) and s[l] == s[r]:,0
+4432,10,if (r - l + 1) > resLen:,0
+4433,11,res = s[l : r + 1],0
+4434,14,resLen = r - l + 1,0
+4435,15,l -= 1,0
+4436,16,r += 1,0
+4437,17,,0
+4438,19,"l, r = i, i + 1",0
+4439,20,while l >= 0 and r < len(s) and s[l] == s[r]:,0
+4440,21,if (r - l + 1) > resLen:,0
+4441,22,res = s[l : r + 1],0
+4442,23,resLen = r - l + 1,0
+4443,24,l -= 1,0
+4444,25,r += 1,0
+4445,27,"    return res
+",0
