@@ -28,7 +28,7 @@ def run_tree(file_name):
         item.extend([keyword, length, regex, math, coll, str_manipulate, bit, var])
 
     # np.savetxt("example.csv", x, delimiter=",")
-    pd.DataFrame(x).to_csv("example.csv", header=["line_number","line","isLOI","is_keyword","length,is_regular_expression","is_mathematical_calculation","is_collection_manipulation","is_string_manipulation","is_bit_manipulation","is_variable_assignment"])
+    pd.DataFrame(x).to_csv("example.csv", header=["line_number","line","isLOI","is_keyword","length","is_regular_expression","is_mathematical_calculation","is_collection_manipulation","is_string_manipulation","is_bit_manipulation","is_variable_assignment"])
     # return np.array(x)
 
 run_tree("./simple_data.npy")
