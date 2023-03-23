@@ -8,13 +8,13 @@ def create_set():
     # print(os.getcwd())
     # print(os.listdir())
     lines.append(['line_number', 'line','isLOI'])
-    file_path=os.getcwd() + "/test_classification"
+    file_path=os.getcwd() + "/../test_classification"
     dir_list= os.listdir(file_path)
     for file_name in dir_list:
-        current_path=file_path + "\\" + file_name
+        current_path=file_path + "/" + file_name
         file_list = os.listdir(current_path)
         for file in file_list:
-            lines=process_lines(current_path + "\\" + file, lines)
+            lines=process_lines(current_path + "/" + file, lines)
     arr=np.asarray(lines)
     print(arr.shape)
     np.save('simple_data.npy', arr)

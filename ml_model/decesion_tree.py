@@ -1,6 +1,7 @@
-import ml_model.find_features as find_features
+import find_features
 
 import numpy as np
+import pandas as pd
 
 def run_tree(file_name):
     arr=np.load(file_name)
@@ -26,6 +27,10 @@ def run_tree(file_name):
 
         item.extend([keyword, length, regex, math, coll, str_manipulate, bit, var])
 
-    print(x[0])
+    print(x)
 
+    # np.savetxt("example.csv", x, delimiter=",")
+    pd.DataFrame(x).to_csv("example.csv")
     return np.array(x)
+
+run_tree("./simple_data.npy")
