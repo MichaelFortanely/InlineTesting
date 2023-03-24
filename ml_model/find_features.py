@@ -1,8 +1,11 @@
 def is_keyword(line):
-    if ('if' or 'elif' or 'else' or 'for' or 'while' or 'break' or
-    'continue' or 'else' or 'def' or 'pass' or 'lambda' or 'return' or 'yield' or 
-    'import' or 'from' or 'as' or 'try' or 'except' or 'raise' or 'finally' or 'else'
-    or 'assert' or 'async' or 'await' or 'del' or 'global' or 'nonlocal' in line):
+    
+    keyword_list = ['if', 'elif', 'else', 'for', 'while', 'break',
+    'continue', 'else', 'def', 'pass', 'lambda', 'return', 'yield',  
+    'import', 'from', 'as', 'try', 'except', 'raise', 'finally', 'else',
+    'assert', 'async', 'await', 'del', 'global', 'nonlocal']
+    
+    if any (m in line for m in keyword_list):
         return 1
     else:
         return 0
@@ -17,25 +20,37 @@ def is_regular_expression(line):
         return 0
 
 def is_mathematical_calculation(line):
-    if '-' or '+' or '*' or '/' or 'math.' in line:
+    
+    math_list = ['-', '+', '*', '/', 'math.']
+    
+    if any (m in line for m in math_list):
         return 1
     else:
         return 0 
 
 def is_collection_manipulation(line):
-    if 'append' or 'clear' or 'copy' or 'extend' or 'insert' or 'pop' or 'remove' or 'reverse' or 'sort' in line:
+    
+    collection_list = ['append', 'clear', 'copy', 'extend', 'insert', 'pop', 'remove', 'reverse', 'sort'] 
+    
+    if any (c in line for c in collection_list):
         return 1
     else:
         return 0
 
 def is_string_manipulation(line):
-    if 'capitalize' or 'casefold' or 'center' or 'encode' or 'format' or 'join' or 'lower' or 'replace' in line:
+    
+    string_list = ['capitalize', 'casefold', 'center', 'encode', 'format', 'join', 'lower', 'replace']
+    
+    if any (s in line for s in string_list): 
         return 1
     else:
         return 0
 
 def is_bit_manipulation(line):
-    if '&' or '|' or '^' or '~' or '<<' or '>>' in line:
+    
+    bit_list = ['&', '|', '^', '~', '<<', '>>']
+    
+    if any (b in line for b in bit_list):
         return 1
     else:
         return 0
