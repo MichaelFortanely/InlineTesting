@@ -1,5 +1,4 @@
 ,line_number,line,isLOI,is_keyword,length,is_regular_expression,is_mathematical_calculation,is_collection_manipulation,is_string_manipulation,is_bit_manipulation,is_variable_assignment
-0,line_number,line,isLOI,is_keyword,length,is_regular_expression,is_mathematical_calculation,is_collection_manipulation,is_string_manipulation,is_bit_manipulation,is_variable_assignment
 1,0,from inline import Here,0,1,23,0,0,0,0,0,0
 2,1,from typing import List,0,1,23,0,0,0,0,0,0
 3,3,"def missingRolls(self, rolls: List[int], mean: int, n: int) -> List[int]:",0,1,73,0,1,0,0,0,0
