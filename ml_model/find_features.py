@@ -23,7 +23,7 @@ def is_mathematical_calculation(line):
         return 0 
 
 def is_collection_manipulation(line):
-    if 'append ' or 'clear' or 'copy' or 'extend' or 'insert' or 'pop' or 'remove' or 'reverse' or 'sort' in line:
+    if 'append' or 'clear' or 'copy' or 'extend' or 'insert' or 'pop' or 'remove' or 'reverse' or 'sort' in line:
         return 1
     else:
         return 0
