@@ -17,7 +17,8 @@ def create_set():
             lines=process_lines(current_path + "/" + file, lines)
     arr=np.asarray(lines)
     print(arr.shape)
-    np.save('simple_data.npy', arr)
+    print(arr)
+    # np.save('simple_data.npy', arr)
  
 
 
@@ -63,3 +64,5 @@ def process_comment(current_line) -> bool:
         else:
             skip=True
     return current_line, skip
+
+create_set()
