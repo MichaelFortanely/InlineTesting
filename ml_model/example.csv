@@ -650,8 +650,8 @@
 630,4,if username is None or password is None:,0,1,40,0,0,0,0,0,0
 631,5,self.report_warning(,0,0,20,0,0,0,0,0,0
 632,6,"""It looks like """,0,0,16,0,0,0,0,0,0
-633,7,+ webpage_url,0,0,13,0,1,0,0,0,0
-634,8,"+ "" requires a login. Try specifying a username and password and try again.""",0,1,76,0,1,0,0,0,0
+633,7,#NAME?,0,0,13,0,1,0,0,0,0
+634,8, requires a login. Try specifying a username and password and try again.,0,1,76,0,1,0,0,0,0
 635,9,),0,0,1,0,0,0,0,0,0
 636,10,return None,0,1,11,0,0,0,0,0,0
 637,12,"mobj = re.match(r""(?P<root_url>https?://.*?/).*"", webpage_url)",1,0,62,1,1,0,0,0,1
@@ -3575,4 +3575,4 @@
 3479,1,from inline import Here,0,1,23,0,0,0,0,0,0
 3480,3,input_list = sys.argv[1:],0,0,25,0,0,0,0,0,1
 3481,4,"result = list(map(str.split(""$""), input_list))",1,0,46,0,0,0,0,0,1
-3482,7,    ),0,,,,,,,,
+3482,7,    ),0,0,1,0,0,0,0,0,0
