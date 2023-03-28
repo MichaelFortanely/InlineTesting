@@ -20,17 +20,33 @@ def create_set():
     print(arr)
     # np.save('simple_data.npy', arr)
  
+def create_single_set(file_name) -> list:
+    lines = []
+    lines.append(['line_number', 'line'])
+    lines = process_user_lines(file_name, lines)
+    arr = np.asarray(lines)
+    print(arr.shape)
+    print(arr)
+    return arr
 
-
-def process_user_file(file_name, lines) -> list:
+def process_user_lines(file_name, lines) -> list:
     file = open(file_name, 'r')
     x = file.readlines()
-    for i in range(0, len(x)-1):
+    for i in range(0, len(x) - 2):
         current_line = x[i].strip()
+        next_line = x[i+1]
         current_line, skip=process_comment(current_line)
 
-        if (not skip) and ("Here(" not in current_line) and (len(current_line > 0)):
-            lines.append([i, current_line, 0])
+        if skip or "Here(" in current_line or (len(current_line) == 0):
+            pass
+        elif "Here(" in next_line:
+            lines.append([i, current_line])
+        else:
+            lines.append([i, current_line])
+    if len(x) > 0:
+        current_line, skip=process_comment(x[len(x)-1])
+        if (not "Here(" in current_line) and (not skip):
+            lines.append([len(x) - 1, current_line])
     file.close()
     return lines
 
@@ -64,5 +80,3 @@ def process_comment(current_line) -> bool:
         else:
             skip=True
     return current_line, skip
-
-create_set()
