@@ -3,6 +3,8 @@ import find_features
 import numpy as np
 import pandas as pd
 
+import os
+
 def run_tree(file_name):
     arr=np.load(file_name)
     x=np.ndarray.tolist(arr)
@@ -58,7 +60,10 @@ def run_user_tree(arr):
     x_pd = pd.DataFrame(x, columns=["line_number","line","is_keyword","length","is_regular_expression","is_mathematical_calculation","is_collection_manipulation","is_string_manipulation","is_bit_manipulation","is_variable_assignment"])
 
     x_pd = x_pd.iloc[1: , :]
-    x_pd.to_csv("../../user_files/example1.csv")
+    # print(x_pd)
+    data_path = "../../user_files/example1.csv"
+    if(os.path.exists(data_path)):
+        x_pd.to_csv(data_path)
 
     # return user test set
     return x_pd
