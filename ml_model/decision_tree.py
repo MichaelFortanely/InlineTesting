@@ -5,6 +5,8 @@ import pandas as pd
 
 import os
 
+""" Open FILE_NAME that contains every line of code and add helpful features to it.
+    These features will be stored to a .csv file to later be used in the ML Model. """
 def run_tree(file_name):
     arr=np.load(file_name)
     x=np.ndarray.tolist(arr)
@@ -27,6 +29,9 @@ def run_tree(file_name):
         bit=find_features.is_bit_manipulation(line)
         var=find_features.is_variable_assignment(line)
 
+        if(var == 1):
+            print(item)
+
         item.extend([keyword, length, regex, math, coll, str_manipulate, bit, var])
 
     x_pd = pd.DataFrame(x)
@@ -34,7 +39,8 @@ def run_tree(file_name):
     x_pd = x_pd.iloc[1: , :]
 
     # np.savetxt("example.csv", x, delimiter=",")
-    x_pd.to_csv("example.csv", header=["line_number","line","isLOI","is_keyword","length","is_regular_expression","is_mathematical_calculation","is_collection_manipulation","is_string_manipulation","is_bit_manipulation","is_variable_assignment"])
+    # x_pd.to_csv("example.csv", header=["line_number","line","isLOI","is_keyword","length","is_regular_expression","is_mathematical_calculation","is_collection_manipulation","is_string_manipulation","is_bit_manipulation","is_variable_assignment"])
+    x_pd.to_csv("processed_data.csv", header=["line_number","line","isLOI","is_keyword","length","is_regular_expression","is_mathematical_calculation","is_collection_manipulation","is_string_manipulation","is_bit_manipulation","is_variable_assignment"])
     # return np.array(x)
 
 def run_user_tree(arr):
@@ -67,3 +73,5 @@ def run_user_tree(arr):
 
     # return user test set
     return x_pd
+
+# run_tree("raw_data_set.npy")

@@ -1,3 +1,5 @@
+import re
+
 def is_keyword(line):
     
     keyword_list = ['if', 'elif', 'else', 'for', 'while', 'break',
@@ -56,7 +58,12 @@ def is_bit_manipulation(line):
         return 0
 
 def is_variable_assignment(line):
-    if line.count('=') == 1:
+    # no equals symbol present
+    if("=" not in line):
+        return 0
+    
+    # equals symbol present
+    if re.match(r"[a-zA-Z_0-9]+(.[a-zA-Z_0-9]+)*( )*[*/+-]?=[ +-]*[a-zA-Z_0-9]+", line):
         return 1
     else: 
         return 0

@@ -1,8 +1,10 @@
 import numpy as np
 import os
 import pandas as pd
+import find_features
 
-
+''' Save every line from "/test_classification" into "simple_data.npy".
+    Each row contains 3 features of each line of code (line_number, line, isLOI).'''
 def create_set():
     lines = []
     # print(os.getcwd())
@@ -14,11 +16,12 @@ def create_set():
         current_path=file_path + "/" + file_name
         file_list = os.listdir(current_path)
         for file in file_list:
+            print(current_path, "/", file)
             lines=process_lines(current_path + "/" + file, lines)
     arr=np.asarray(lines)
     print(arr.shape)
     print(arr)
-    # np.save('simple_data.npy', arr)
+    np.save('raw_data_set.npy', arr) # save each line with 3 features (no ML features yet)
  
 def create_single_set(user_text) -> list:
     lines = []
@@ -34,20 +37,22 @@ def process_user_lines(user_text, lines) -> list:
     for i in range(0, len(x) - 1):
         current_line = x[i].strip()
         next_line = x[i+1]
-        current_line, skip=process_comment(current_line)
+        current_line, skip = process_comment(current_line)
 
-        if skip or "Here(" in current_line or (len(current_line) == 0):
+        if skip or "Here(" in current_line:
             pass
         elif "Here(" in next_line:
             lines.append([i, current_line])
         else:
             lines.append([i, current_line])
     if len(x) > 0:
-        current_line, skip=process_comment(x[len(x)-1])
+        current_line, skip = process_comment(x[len(x)-1])
         if (not "Here(" in current_line) and (not skip):
             lines.append([len(x) - 1, current_line])
     return lines
 
+''' Open FILE_NAME and extract all the lines of code, then
+    return the line info and whether it is "line of interest".'''
 def process_lines(file_name, lines) -> list:
     file = open(file_name, 'r')
     x = file.readlines()
@@ -61,14 +66,19 @@ def process_lines(file_name, lines) -> list:
         elif "Here(" in next_line:
             lines.append([i, current_line, 1])
         else:
-            lines.append([i, current_line, 0])
+            # print(current_line)
+            if(find_features.is_variable_assignment(current_line)):
+                lines.append([i, current_line, 1])
+            else:
+                lines.append([i, current_line, 0])
     if len(x) > 0:
         current_line, skip=process_comment(x[len(x)-1])
         if (not "Here(" in current_line) and (not skip):
             lines.append([len(x) - 1, current_line, 0])
     file.close()
     return lines
-    
+
+''' Determine whether line is a comment. '''
 def process_comment(current_line) -> bool:
     skip=False
     if current_line.rfind("#") != -1:
@@ -78,3 +88,5 @@ def process_comment(current_line) -> bool:
         else:
             skip=True
     return current_line, skip
+
+# create_set()

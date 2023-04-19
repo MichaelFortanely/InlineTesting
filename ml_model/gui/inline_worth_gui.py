@@ -15,7 +15,7 @@ class InlineGUI:
 
         ''' machine learning model'''
         self.clf = tree.DecisionTreeClassifier()
-        try_ml_model.setup_train_set("../example.csv", self.clf)
+        try_ml_model.setup_train_set("../processed_data.csv", self.clf)
 
         ''' size and color prefs '''
         self.root.geometry("800x500")
@@ -102,15 +102,16 @@ class InlineGUI:
         prgm_stmts = self.text_box.get("1.0", tk.END)
         if(len(prgm_stmts) != 1):
             prgm_lines = parsing.create_single_set(prgm_stmts.strip())
+            print(prgm_lines)
             prgm_stmts_pd = decision_tree.run_user_tree(prgm_lines)
             worthiness = try_ml_model.inline_worthiness(self.clf, prgm_stmts_pd)
             self.text_box.delete("1.0", "end")
             # print(prgm_lines)
             # print(worthiness)
             for n in range(0, len(prgm_lines) - 1):
-                result = "# Worthy of i-test"
-                if(worthiness[0] == 0):
-                    result = "# NOT worthy"
+                result = " # Worthy of i-test"
+                if(worthiness[n] == 0):
+                    result = " # NOT worthy"
                 self.text_box.insert(tk.END, str(prgm_lines[n + 1][1]) + result + "\n")
 
 InlineGUI()

@@ -19,16 +19,27 @@ txt = "Have you anything ever had a dream that you, um, you had, your, you- you 
     "you’ll do, you- you wants, you, you could do so, you- you’ll do, you could- " \
     "you, you want, you want him to do you so much you could do anything?"
 
+# verify
+Here().given(txt, "Have you anything ever had a dream that you, um, you had, your, you- you could, " \
+    "you’ll do, you- you wants, you, you could do so, you- you’ll do, you could- " \
+    "you, you want, you want him to do you so much you could do anything?").check_eq(str(type(txt)), "<class 'str'>")
+
 # parse this text
 res = re.findall(r"[- ’A-Za-z]*,|[- ’A-Za-z]*\?", txt)
+
+# verify
+Here().given(txt, "Have you anything ever had a dream that you, um, you had, your, you- you could, " \
+    "you’ll do, you- you wants, you, you could do so, you- you’ll do, you could- " \
+    "you, you want, you want him to do you so much you could do anything?").check_eq(res, ['Have you anything ever had a dream that you,', ' um,', ' you had,', ' your,', ' you- you could,', ' you’ll do,', ' you- you wants,', ' you,', ' you could do so,', ' you- you’ll do,', ' you could- you,', ' you want,', ' you want him to do you so much you could do anything?'])
+
 idx = 0
 for tok in res:
 	tok = tok.replace(",", "")
+
+	# verify
+	Here().given(txt, "Have you anything ever had a dream that you, um, you had, your, you- you could, " \
+    "you’ll do, you- you wants, you, you could do so, you- you’ll do, you could- " \
+    "you, you want, you want him to do you so much you could do anything?").check_true(re.match(r"[- ’A-Za-z?]*", tok))
+
 	res[idx] = tok
 	idx += 1
-
-# expected answer
-ans = txt.split(",")
-
-# verify
-Here().given(input_list, txt).check_eq(res, ans)

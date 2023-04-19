@@ -1,2 +1,2 @@
 ,line_number,line,is_keyword,length,is_regular_expression,is_mathematical_calculation,is_collection_manipulation,is_string_manipulation,is_bit_manipulation,is_variable_assignment
-1,0,print(isPositive),0,17,0,0,0,0,0,0
+1,0,import pandas as pd,1,19,0,0,0,0,0,0
